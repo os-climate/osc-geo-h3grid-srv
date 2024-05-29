@@ -1,0 +1,15 @@
+loader_type: CSVLoader
+dataset_name: point_no_header
+dataset_type: point
+database_dir: ./tmp
+interval: one_time
+max_resolution: 2
+data_columns: [mydata]
+
+file_path: ./examples/loading/basic/no_date_no_header.csv
+has_header_row: false
+columns:
+  longitude: float
+  latitude: float
+  mydata: float
+mode: create

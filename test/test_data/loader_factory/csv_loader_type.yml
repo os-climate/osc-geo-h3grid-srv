@@ -1,0 +1,16 @@
+loader_type: CSVLoader
+dataset_name: h3_no_header
+dataset_type: h3
+database_dir: ./test/test_data/loader_factory/tmp
+interval: one_time
+max_resolution: 2
+data_columns: [mydata]
+
+file_path: ./test/test_data/csvloader/no_date_no_header.csv
+has_header_row: false
+columns:
+  longitude: float
+  latitude: float
+  mydata: float
+mode: create
+

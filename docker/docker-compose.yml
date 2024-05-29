@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+
+    # Data Product
+    osc-geo-h3grid-srv:
+        image: ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+        hostname: ${HOSTNAME}
+        # container_name: ${HOSTNAME}
+        ports:
+        # OUTSIDE:INSIDE
+        # curl http://localhost:${SERVER_PORT}/data
+        - ${PUBLIC_PORT}:${PRIVATE_PORT}
+        volumes:
+        - ${PROJECT_DIR}/config/:/app/config
+        - ${PROJECT_DIR}/databases:/app/databases
+        - ${PROJECT_DIR}/data:/app/data
+        networks:
+        - localnet
+
+networks:
+    localnet:
+        external: true

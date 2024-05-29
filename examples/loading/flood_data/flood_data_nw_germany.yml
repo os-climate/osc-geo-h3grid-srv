@@ -1,0 +1,15 @@
+loader_type: ParquetLoader
+dataset_name: flood_nw_germany
+dataset_type: h3
+database_dir: ./tmp
+interval: one_time
+max_resolution: 9
+data_columns: [value]
+max_parallelism: 16
+
+file_path: ./tmp/flood_nw_germany.parquet
+mode: create
+
+shapefile: ./data/shapefiles/custom/nw_germany_shapefile/nw_germany.shp
+region: Rhine
+

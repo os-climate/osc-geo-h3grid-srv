@@ -1,0 +1,16 @@
+loader_type: CSVLoader
+dataset_name: jamaica_buildings
+dataset_type: point
+database_dir: ./tmp
+interval: one_time
+max_resolution: 13
+data_columns: [name]
+
+file_path: ./examples/loading/jamaica_buildings/buildings.csv
+has_header_row: true
+columns:
+  name: str
+  latitude: float
+  longitude: float
+mode: create
+
