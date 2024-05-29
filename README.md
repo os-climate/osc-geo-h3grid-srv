@@ -2,7 +2,7 @@
 
 Experimental geospatial temporal data mesh that uses
 H3 (from Uber) cells to create a uniform mesh of regions
-or varying resolutions for the globe.
+of varying resolutions for the globe.
 
 Capabilities include:
 - loading geospatial data
@@ -18,7 +18,7 @@ with key contributions by:
 
 ## The Geospatial Grid
 
-The h3 geospatial indexing system ia an indexing system created
+The h3 geospatial indexing system is an indexing system created
 by Uber to represent the entire globe. It consists of a series of 
 hexagonal grids that cover the world at different resolution levels.  
 
