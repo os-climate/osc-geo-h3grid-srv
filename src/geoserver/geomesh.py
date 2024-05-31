@@ -10,6 +10,7 @@ from typing import Tuple, List, Any, Dict, Optional, Set
 
 import duckdb
 import h3
+from pydantic import BaseModel, Field
 from shapely.geometry import Polygon
 
 import re
@@ -46,17 +47,45 @@ INT_TO_MONTH = {
     12: "DEC"
 }
 
-
-
 NUM_NEIGHBOURS = 3
 KM_PER_DEGREE = 110  # Each degree is about 110 KM
 
 MIN_LAT, MAX_LAT = -60.0, 85.0  # Excluding Antarctica
 MIN_LONG, MAX_LONG = -180.0, 180.0  # Full range of longitudes
 
-# GISS_TABLE_NAME_BASE = "giss_temp_dec_2022"
+
+class CellDataRow(BaseModel):
+    cell: str = Field(description="The cell that this data row represents")
+
+    latitude: float = Field(
+        description="The latitude of the center of the cell"
+                    " this data row represents")
+
+    longitude: float = Field(
+        description="The longitude of the center of the cell"
+                    " this data row represents")
+
+    values: Dict[str, Any] = Field(
+        description="Any data values associated with this row's cell."
+                    " Keys represent the column the data element comes from,"
+                    " with the value being what was present in that column.")
 
 
+class PointDataRow(BaseModel):
+    latitude: float = Field(
+        description="The latitude of the point this data row represents")
+
+    longitude: float = Field(
+        description="The longitude of the point this data row represents")
+
+    values: Dict[str, Any] = Field(
+        description="Any data values associated with this row's cell."
+                    " Keys represent the column the data element comes from,"
+                    " with the value being what was present in that column.")
+
+    cells: Dict[str, str] = Field(
+        description="The cells this point is contained within,"
+                    " at various resolutions")
 
 
 class Geomesh:
@@ -135,7 +164,7 @@ class Geomesh:
             year: Optional[int],
             month: Optional[int],
             day: Optional[int]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[CellDataRow]:
         """
         Retrieve data within the region(s) defined by a shapefile.
 
@@ -253,18 +282,7 @@ class Geomesh:
                 data.append(res_row)
 
         # format output as a json object
-        out = []
-        for row in data:
-            num_val_cols = len(col_names)
-            out_json = {
-                "cell": row[0],
-                "latitude": row[1],
-                "longitude": row[2],
-            }
-            for i in range(0, num_val_cols):
-                index = i + 3
-                out_json[col_names[i]] = row[index]
-            out.append(out_json)
+        out = self._row_to_cell_out(data, col_names)
         return out
 
     def shapefile_get_point(
@@ -275,7 +293,7 @@ class Geomesh:
             year: Optional[int],
             month: Optional[int],
             day: Optional[int]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[PointDataRow]:
         """
         Retrieve data within the region(s) defined by a shapefile.
 
@@ -367,42 +385,28 @@ class Geomesh:
         raw_result: List[Tuple] = connection \
             .execute(sql, time_params).fetchall()
 
-        json_result = []
-        for row in raw_result:
-            num_cell_cols = len(cell_col_names)
-            out_json = {}
-
-            for i in range(0, num_cell_cols):
-                out_json[cell_col_names[i]] = row[i]
-
-            out_json["latitude"] = row[num_cell_cols]
-            out_json["longitude"] = row[num_cell_cols + 1]
-
-            for i in range(0, len(row) - (num_cell_cols + 2)):
-                out_json[val_col_names[i]] = row[num_cell_cols + 2 + i]
-
-            json_result.append(out_json)
+        point_rows = self._row_to_point_out(
+            raw_result, val_col_names, cell_col_names)
 
         filter(
-            lambda jsn: shape.point_within_shape(
-                jsn["latitude"], jsn["longitude"], region
+            lambda row: shape.point_within_shape(
+                row.latitude, row.longitude, region
             ),
-            json_result
+            point_rows
         )
 
-        return json_result
+        return point_rows
 
 
-    def cell_get_radius(
+    def cell_get_radius_h3(
             self,
             dataset_name: str,
             cell: str,
             radius: float,
             year: Optional[int],
             month: Optional[int],
-            day: Optional[int],
-            type: str = "h3"
-    ) -> List[Dict[str, Any]]:
+            day: Optional[int]
+    ) -> List[CellDataRow]:
         """
         Retrieve GISS geo data within a specified radius of a specific
         h3 cell, specified by cell ID
@@ -426,22 +430,97 @@ class Geomesh:
         :rtype: List[Dict[str, Any]]
         """
         lat, long = self._to_latlon(cell)
-        if type == "h3":
-            resolution = h3.h3_get_resolution(cell)
-        else:
-            resolution = None
-        return self.lat_long_get_radius(
+        return self.lat_long_get_radius_h3(
             dataset_name,
             lat,
             long,
             radius,
-            resolution,
+            h3.h3_get_resolution(cell),
             year,
             month,
             day
         )
 
-    def lat_long_get_radius(
+    def cell_get_radius_point(
+            self,
+            dataset_name: str,
+            cell: str,
+            radius: float,
+            year: Optional[int],
+            month: Optional[int],
+            day: Optional[int]
+    ) -> List[PointDataRow]:
+        lat, long = self._to_latlon(cell)
+        return self.lat_long_get_radius_point(
+            dataset_name,
+            lat,
+            long,
+            radius,
+            year,
+            month,
+            day
+        )
+
+    def lat_long_get_radius_point(
+            self,
+            dataset_name: str,
+            latitude: float,
+            longitude: float,
+            radius: float,
+            year: Optional[int],
+            month: Optional[int],
+            day: Optional[int]
+    ) -> List[PointDataRow]:
+        if not self.metadb.ds_meta_exists(dataset_name):
+            raise Exception(f"dataset {dataset_name} not registered"
+                            f" in metadata.")
+
+        meta = self.metadb.get_ds_metadata(dataset_name)
+        val_col_names: List[str] = meta["value_columns"]["key"]
+        ds_type = meta["dataset_type"]
+
+        if ds_type != "point":
+            raise InvalidArgumentException(
+                f"dataset {dataset_name} is not a point dataset. Instead it"
+                f"was {ds_type}"
+            )
+
+        table_name = self._table_name_from_ds_type(
+            dataset_name, ds_type, None
+        )
+
+        out_db_path = self._get_db_path(dataset_name)
+        connection = duckdb.connect(database=out_db_path)
+
+        col_list = connection.execute(f"describe {table_name}").fetchall()
+        all_col_names = list(map(
+            lambda c: c[0],
+            col_list
+        ))
+        cell_col_names = list(filter(
+            lambda cn: dataset_utilities.col_name_is_point_res_col(cn),
+            all_col_names
+        ))
+
+        raw: List[Tuple] = self._lat_long_get_radius(
+            dataset_name,
+            latitude,
+            longitude,
+            radius,
+            None,
+            year,
+            month,
+            day
+        )
+
+        out = self._row_to_point_out(
+            rows=raw,
+            val_col_names=val_col_names,
+            cell_col_names=cell_col_names
+        )
+        return out
+
+    def lat_long_get_radius_h3(
             self,
             dataset_name: str,
             latitude: float,
@@ -451,7 +530,46 @@ class Geomesh:
             year: Optional[int],
             month: Optional[int],
             day: Optional[int]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[CellDataRow]:
+        if not self.metadb.ds_meta_exists(dataset_name):
+            raise Exception(f"dataset {dataset_name} not registered"
+                            f" in metadata.")
+
+        meta = self.metadb.get_ds_metadata(dataset_name)
+        val_col_names: List[str] = meta["value_columns"]["key"]
+        ds_type = meta["dataset_type"]
+
+        if ds_type != "h3":
+            raise InvalidArgumentException(
+                f"dataset {dataset_name} is not an h3 dataset. Instead it"
+                f"was {ds_type}"
+            )
+
+        raw: List[Tuple] = self._lat_long_get_radius(
+            dataset_name,
+            latitude,
+            longitude,
+            radius,
+            resolution,
+            year,
+            month,
+            day
+        )
+
+        out = self._row_to_cell_out(raw, val_col_names)
+        return out
+
+    def _lat_long_get_radius(
+            self,
+            dataset_name: str,
+            latitude: float,
+            longitude: float,
+            radius: float,
+            resolution: Optional[int],
+            year: Optional[int],
+            month: Optional[int],
+            day: Optional[int]
+    ) -> List[Tuple]:
         """
         Retrieve GISS geo data within a specified radius of a specific
         geographic point, specified by longitude/latitude.
@@ -548,44 +666,17 @@ class Geomesh:
         raw_result: List[Tuple] = connection\
             .execute(sql, time_params).fetchall()
 
-        out = []
-        for row in raw_result:
-            if ds_type == "h3":
-                num_val_cols = len(val_col_names)
-                out_json = {
-                    "cell": row[0],
-                    "latitude": row[1],
-                    "longitude": row[2],
-                }
-                for i in range(0, num_val_cols):
-                    index = i + 3
-                    out_json[val_col_names[i]] = row[index]
-                out.append(out_json)
-            elif ds_type == "point":
-                # point type
-                num_cell_cols = len(cell_col_names)
-                out_json = {}
+        return raw_result
 
-                for i in range(0, num_cell_cols):
-                    out_json[cell_col_names[i]] = row[i]
 
-                out_json["latitude"] = row[num_cell_cols]
-                out_json["longitude"] = row[num_cell_cols + 1]
-
-                for i in range(0, len(row) - (num_cell_cols + 2)):
-                    out_json[val_col_names[i]] = row[num_cell_cols + 2 + i]
-
-                out.append(out_json)
-        return out
-
-    def cell_id_to_value(
+    def cell_id_to_value_h3(
             self,
             dataset_name: str,
             cell: str,
             year: int,
             month: Optional[int],
             day: Optional[int]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[CellDataRow]:
         """
         Retrieve geo data for a specific cell in a dataset
 
@@ -611,11 +702,10 @@ class Geomesh:
         col_names: List[str] = meta["value_columns"]["key"]
         value_columns = ", ".join(col_names)
         ds_type = meta["dataset_type"]
-        if ds_type != "h3" and ds_type != "point":
+        if ds_type != "h3":
             raise OperationUnsupportedException(
-                "getting information at a precise point or cell"
-                f" is only available for h3 or point datasets. This dataset:"
-                f" [{dataset_name}] is of type {ds_type}"
+                "the dataset specified was not an h3 dataset. This dataset:"
+                f" {dataset_name} is of type: {ds_type}"
 
             )
 
@@ -628,8 +718,62 @@ class Geomesh:
             dataset_name, ds_type, resolution
         )
 
-        if not os.path.exists(self.geo_out_db_dir):
-            os.makedirs(self.geo_out_db_dir)
+        out_db_path = os.path.join(self.geo_out_db_dir, db_name)
+        connection = duckdb.connect(database=out_db_path)
+
+        params = [cell]
+
+        time_filter, time_params = self._get_time_filters(
+            meta["interval"], year, month, day)
+        for param in time_params:
+            params.append(param)
+
+        cell_where = "cell = ?"
+        full_where = self._combine_where_clauses([cell_where, time_filter])
+
+        sql = f"""
+            SELECT cell, latitude, longitude, {value_columns}
+            FROM {table_name}
+            {full_where}
+        """
+
+        row: Tuple = connection.execute(sql, params).fetchone()
+        out = self._row_to_cell_out([row], col_names)
+
+
+        return out
+
+    def cell_id_to_value_point(
+            self,
+            dataset_name: str,
+            cell: str,
+            year: int,
+            month: Optional[int],
+            day: Optional[int]
+    ) -> List[PointDataRow]:
+        if not self.metadb.ds_meta_exists(dataset_name):
+            raise Exception(f"dataset {dataset_name} not registered"
+                            f" in metadata.")
+
+        meta = self.metadb.get_ds_metadata(dataset_name)
+        col_names: List[str] = meta["value_columns"]["key"]
+        value_columns = ", ".join(col_names)
+        ds_type = meta["dataset_type"]
+        if ds_type != "point":
+            raise OperationUnsupportedException(
+                "the dataset specified was not an h3 dataset. This dataset:"
+                f" {dataset_name} is of type: {ds_type}"
+
+            )
+
+        # Get resolution from cell (cell string is built using
+        # an explicit resolution)
+        resolution = h3.h3_get_resolution(cell)
+
+        db_name = f"{dataset_name}.duckdb"
+        table_name = self._table_name_from_ds_type(
+            dataset_name, ds_type, resolution
+        )
 
         out_db_path = os.path.join(self.geo_out_db_dir, db_name)
         connection = duckdb.connect(database=out_db_path)
@@ -641,57 +785,30 @@ class Geomesh:
         for param in time_params:
             params.append(param)
 
-        if ds_type == "h3":
+        cell_col = dataset_utilities.get_point_res_col(resolution)
+        cell_where = f"{cell_col} = ?"
+        full_where = self._combine_where_clauses([cell_where, time_filter])
 
-            cell_where = "cell = ?"
-            full_where = self._combine_where_clauses([cell_where, time_filter])
+        col_list = connection.execute(f"describe {table_name}").fetchall()
+        all_col_names = list(map(
+            lambda c: c[0],
+            col_list
+        ))
+        cell_col_names = list(filter(
+            lambda cn: dataset_utilities.col_name_is_point_res_col(cn),
+            all_col_names
+        ))
+        all_cell_column = ", ".join(cell_col_names)
 
-            sql = f"""
-                SELECT cell, latitude, longitude, {value_columns}
-                FROM {table_name}
-                {full_where}
-            """
+        sql = f"""
+            SELECT {all_cell_column}, latitude, longitude, {value_columns}
+            FROM {table_name}
+            {full_where}
+        """
 
-            row: Tuple = connection.execute(sql, params).fetchone()
+        rows = connection.execute(sql, params).fetchall()
 
-            res = {
-                "cell": row[0],
-                "latitude": row[1],
-                "longitude": row[2],
-            }
-
-            num_val_cols = len(col_names)
-            for i in range(0, num_val_cols):
-                index = i + 3
-                res[col_names[i]] = row[index]
-            out = [res]
-        else:
-            # point dataset
-            cell_col = dataset_utilities.get_point_res_col(resolution)
-            cell_where = f"{cell_col} = ?"
-            full_where = self._combine_where_clauses([cell_where, time_filter])
-
-            sql = f"""
-                    SELECT {cell_col}, latitude, longitude, {value_columns}
-                    FROM {table_name}
-                    {full_where}
-                """
-
-            rows = connection.execute(sql, params).fetchall()
-
-            out = []
-            for row in rows:
-                res = {
-                    "cell": row[0],
-                    "latitude": row[1],
-                    "longitude": row[2],
-                }
-                num_val_cols = len(col_names)
-                for i in range(0, num_val_cols):
-                    index = i + 3
-                    res[col_names[i]] = row[index]
-                out.append(res)
-
+        out = self._row_to_point_out(rows, col_names, cell_col_names)
         return out
 
     def lat_long_to_value(
@@ -703,7 +820,7 @@ class Geomesh:
             year: int,
             month: Optional[int],
             day: Optional[int]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[CellDataRow]:
         """
         Retrieve GISS geo data for the cell that contains a specified point.
 
@@ -729,7 +846,7 @@ class Geomesh:
         """
 
         cell = h3.geo_to_h3(latitude, longitude, resolution)
-        return self.cell_id_to_value(
+        return self.cell_id_to_value_h3(
             dataset_name,
             cell,
             year,
@@ -891,6 +1008,54 @@ class Geomesh:
     #####
     # INTERNAL
     #####
+
+    def _row_to_cell_out(
+            self,
+            rows: List[Tuple],
+            val_col_names: List[str]
+    ):
+        out = []
+        for row in rows:
+            num_val_cols = len(val_col_names)
+            values_dict = {}
+            for i in range(0, num_val_cols):
+                index = i + 3
+                values_dict[val_col_names[i]] = row[index]
+            out.append(
+                CellDataRow(
+                    cell=row[0],
+                    latitude=row[1],
+                    longitude=row[2],
+                    values=values_dict
+                )
+            )
+        return out
+
+    def _row_to_point_out(
+            self,
+            rows: List[Tuple],
+            val_col_names: List[str],
+            cell_col_names: List[str]
+    ) -> List[PointDataRow]:
+        out = []
+        for row in rows:
+            num_cell_cols = len(cell_col_names)
+            cell_cols = {}
+            values = {}
+
+            for i in range(0, num_cell_cols):
+                cell_cols[cell_col_names[i]] = row[i]
+
+            for i in range(0, len(row) - (num_cell_cols + 2)):
+                values[val_col_names[i]] = row[num_cell_cols + 2 + i]
+
+            out.append(PointDataRow(
+                latitude=row[num_cell_cols],
+                longitude=row[num_cell_cols + 1],
+                cells=cell_cols,
+                values=values
+            ))
+        return out
 
     def _get_h3_in_boundary(
             self,

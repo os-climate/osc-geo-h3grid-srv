@@ -5,13 +5,13 @@
 # https://opensource.org/licenses/MIT.
 #
 # Created: 2024-03-27 by davis.broda@brodagroupsoftware.com
-from typing import Optional
+from typing import Optional, Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from geoserver.bgsexception import BgsException
-from geoserver.geomesh import Geomesh
+from geoserver.geomesh import Geomesh, CellDataRow
 from .route_constants import API_PREFIX
 from .. import state
 
@@ -21,45 +21,44 @@ ENDPOINT_PREFIX = API_PREFIX + "/geomesh"
 
 
 class GeomeshLatLongRadiusArgs(BaseModel):
+    latitude: float = Field(description="The latitude of the central point")
 
-    latitude: float
-    """The latitude of the central point"""
+    longitude: float = Field(description="The longitude of the central point")
 
-    longitude: float
-    """The longitude of the central point"""
+    radius: float = Field(
+        description="The radius to retrieve around the central point"
+    )
 
-    radius: float
-    """The radius to retrieve around the central point"""
+    resolution: int = Field(
+        3,
+        description="The h3 resolution level to retrieve data for"
+    )
 
-    resolution: int = 3
-    """The resolution to retrieve data for"""
+    year: Optional[int] = Field(
+        None, description="The year to retrieve data for")
 
-    year: Optional[int] = None
-    """The year to retrieve data for"""
+    month: Optional[int] = Field(
+        None, description="The month to retrieve data for")
 
-    month: Optional[int] = None,
-    """The month to retrieve data for"""
-
-    day: Optional[int] = None
-    """The day to retrieve data for"""
-
+    day: Optional[int] = Field(
+        None, description="The day to retrieve data for")
 
 @router.post(ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
 async def geomesh_latlong_radius_post(
         dataset: str,
         params: GeomeshLatLongRadiusArgs
-):
+) -> List[CellDataRow]:
     """
     Retrieves data for all GISS H3 cells that fall within a radius
     of a specified central point.
     :return: The data within specified radius
-    :rtype: List[Dict[str, Any]]
+    :rtype: List[CellDataRow]
     """
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
-        return geo.lat_long_get_radius(
+        return geo.lat_long_get_radius_h3(
             dataset,
             params.latitude,
             params.longitude,
@@ -74,29 +73,28 @@ async def geomesh_latlong_radius_post(
 
 
 class GeomeshLatLongPointArgs(BaseModel):
-    latitude: float
-    """The latitude of the central point"""
+    latitude: float = Field(description="The latitude of the central point")
 
-    longitude: float
-    """The longitude of the central point"""
+    longitude: float = Field(description="The longitude of the central point")
 
-    resolution: int = 3
-    """The resolution to retrieve data for"""
+    resolution: int = Field(
+        3, description="The resolution to retrieve data for")
 
-    year: Optional[int] = None
-    """The year to retrieve data for"""
+    year: Optional[int] = Field(
+        None, description="The year to retrieve data for")
 
-    month: Optional[int] = None,
-    """The month to retrieve data for"""
+    month: Optional[int] = Field(
+        None, description="The month to retrieve data for")
 
-    day: Optional[int] = None
-    """The day to retrieve data for"""
+    day: Optional[int] = Field(
+        None, description="The day to retrieve data for")
+
 
 @router.post(ENDPOINT_PREFIX + "/latlong/point/{dataset}")
 async def geomesh_latlong_point_post(
         dataset: str,
         params: GeomeshLatLongPointArgs
-):
+) -> List[CellDataRow]:
     """
     Retrieve GISS geo data for the cell that contains a specified point.
 
@@ -121,27 +119,26 @@ async def geomesh_latlong_point_post(
 
 
 class GeomeshCellRadiusArgs(BaseModel):
-    cell: str
-    """The ID of the central cell"""
+    cell: str = Field(description="The ID of the central cell")
 
-    radius: float
-    """The radius to retrieve around the central point"""
+    radius: float = Field(
+        description="The radius to retrieve around the central point")
 
-    year: Optional[int] = None
-    """The year to retrieve data for"""
+    year: Optional[int] = Field(
+        None, description="The year to retrieve data for")
 
-    month: Optional[int] = None,
-    """The month to retrieve data for"""
+    month: Optional[int] = Field(
+        None, description="The month to retrieve data for")
 
-    day: Optional[int] = None
-    """The day to retrieve data for"""
+    day: Optional[int] = Field(
+        None, description="The day to retrieve data for")
 
 
 @router.post(ENDPOINT_PREFIX + "/cell/radius/{dataset}")
 async def geomesh_cell_radius_post(
         dataset: str,
         params: GeomeshCellRadiusArgs
-):
+) -> List[CellDataRow]:
     """
     Retrieve GISS geo data within a specified radius of a specific
     h3 cell, specified by cell ID
@@ -152,7 +149,7 @@ async def geomesh_cell_radius_post(
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
-        return geo.cell_get_radius(
+        return geo.cell_get_radius_h3(
             dataset,
             params.cell,
             params.radius,
@@ -165,24 +162,23 @@ async def geomesh_cell_radius_post(
 
 
 class GeomeshCellPointArgs(BaseModel):
-    cell: str
-    """The ID of the central cell"""
+    cell: str = Field(description="The ID of the central cell")
 
-    year: Optional[int] = None
-    """The year to retrieve data for"""
+    year: Optional[int] = Field(
+        None, description="The year to retrieve data for")
 
-    month: Optional[int] = None,
-    """The month to retrieve data for"""
+    month: Optional[int] = Field(
+        None, description="The month to retrieve data for")
 
-    day: Optional[int] = None
-    """The day to retrieve data for"""
+    day: Optional[int] = Field(
+        None, description="The day to retrieve data for")
 
 
 @router.post(ENDPOINT_PREFIX + "/cell/point/{dataset}")
-async def giss_cell_point(
+async def geomesh_cell_point(
         dataset: str,
         params: GeomeshCellPointArgs
-):
+) -> List[CellDataRow]:
     """
     Retrieve geo data for a specific cell
 
@@ -192,7 +188,7 @@ async def giss_cell_point(
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
-        return geo.cell_id_to_value(
+        return geo.cell_id_to_value_h3(
             dataset,
             params.cell,
             params.year,
@@ -204,39 +200,38 @@ async def giss_cell_point(
 
 
 class GeomeshShapefileArgs(BaseModel):
-    shapefile: str
-    """
-    The shapefile to use. Must be a local file on the filesystem
-    of the server. 
-    """
+    shapefile: str = Field(
+        description="The shapefile to use. Must be a local file on"
+                    " the filesystem of the server."
+    )
 
-    region: Optional[str] = None
-    """
-    The region within the shapefile to use. Only data within this
-    specific region will be retrieved. Intended for use in cases where
-    multiple entities are defined in one file (ex. a file containing 
-    the boundaries of every country in the world), but only a single one 
-    should be used.
-    """
+    region: Optional[str] = Field(
+        None,
+        description="The region within the shapefile to use. Only data within"
+                    " this specific region will be retrieved. Intended for"
+                    " use in cases where multiple entities are defined in one"
+                    " file (ex. a file containing the boundaries of every"
+                    " country in the world), but only a single one should"
+                    " be used.")
 
-    resolution: int = 3
-    """The h3 resolution to retrieve data for"""
+    resolution: int = Field(
+        3, description="The h3 resolution to retrieve data for")
 
-    year: Optional[int] = None
-    """The year to retrieve data for"""
+    year: Optional[int] = Field(
+        None, description="The year to retrieve data for")
 
-    month: Optional[int] = None
-    """The month to retrieve data for"""
+    month: Optional[int] = Field(
+        None, description="The month to retrieve data for")
 
-    day: Optional[int] = None
-    """The day to retrieve data for"""
+    day: Optional[int] = Field(
+        None, description="The day to retrieve data for")
 
 
 @router.post(ENDPOINT_PREFIX + "/shapefile/{dataset}")
 async def geomesh_shapefile(
         dataset: str,
         params: GeomeshShapefileArgs
-):
+) -> List[CellDataRow]:
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
