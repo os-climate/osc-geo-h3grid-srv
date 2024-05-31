@@ -5,68 +5,66 @@
 # https://opensource.org/licenses/MIT.
 #
 # Created: 2024-03-27 by davis.broda@brodagroupsoftware.com
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from geoserver import state
 from geoserver.bgsexception import BgsException
-from geoserver.geomesh import Geomesh
+from geoserver.geomesh import Geomesh, PointDataRow
 from geoserver.routers import API_PREFIX
 
 router = APIRouter()
 
-ENDPOINT_PREFIX = API_PREFIX + "/point"
+ENDPOINT_PREFIX = API_PREFIX + "/datasets" +  "/point"
 
 
 class PointLatLongRadiusArgs(BaseModel):
 
-    latitude: float
-    """The latitude of the central point"""
+    latitude: float = Field(description="The latitude of the central point")
 
-    longitude: float
-    """The longitude of the central point"""
+    longitude: float = Field(description="The longitude of the central point")
 
-    radius: float
-    """The radius to retrieve around the central point"""
+    radius: float = Field(
+        description="The radius to retrieve around the central point")
 
-    year: Optional[int] = None
-    """The year to retrieve data for"""
+    year: Optional[int] = Field(
+        None,description="The year to retrieve data for")
 
-    month: Optional[int] = None,
-    """The month to retrieve data for"""
+    month: Optional[int] = Field(
+        None,description="The month to retrieve data for")
 
-    day: Optional[int] = None
-    """The day to retrieve data for"""
+    day: Optional[int] = Field(
+        None, description="The day to retrieve data for")
 
 @router.post(ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
 async def point_latlong_radius_post(
         dataset: str,
         params: PointLatLongRadiusArgs
-):
+) -> List[PointDataRow]:
     """
     Retrieves all data from specified point dataset that fall within a radius
     of a specified central point.
     :return: The data within specified radius
-    :rtype: List[Dict[str, Any]]
+    :rtype: List[PointDataRow]
     """
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
-        return geo.lat_long_get_radius(
+        return geo.lat_long_get_radius_point(
             dataset,
             params.latitude,
             params.longitude,
             params.radius,
-            None,  # point datasets do not need resolution
             params.year,
             params.month,
             params.day
         )
     except BgsException as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 class PointCellRadiusArgs(BaseModel):
     cell: str
@@ -89,7 +87,7 @@ class PointCellRadiusArgs(BaseModel):
 async def point_cell_radius_post(
         dataset: str,
         params: PointCellRadiusArgs
-):
+) -> List[PointDataRow]:
     """
     Retrieve GISS geo data within a specified radius of a specific
     h3 cell, specified by cell ID
@@ -100,14 +98,13 @@ async def point_cell_radius_post(
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
-        return geo.cell_get_radius(
+        return geo.cell_get_radius_point(
             dataset,
             params.cell,
             params.radius,
             params.year,
             params.month,
-            params.day,
-            type="point"
+            params.day
         )
     except BgsException as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -131,9 +128,9 @@ class PointCellPointArgs(BaseModel):
 async def point_cell_point(
         dataset: str,
         params: PointCellPointArgs
-):
+) -> List[PointDataRow]:
     """
-    Retrieve geo data for a specific cell
+    Retrieve all points that fall within a specific cell
 
     :return: The data for specified cell
     :rtype: Dict[str, Any]
@@ -141,7 +138,7 @@ async def point_cell_point(
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
-        return geo.cell_id_to_value(
+        return geo.cell_id_to_value_point(
             dataset,
             params.cell,
             params.year,
@@ -182,7 +179,7 @@ class GeomeshShapefileArgs(BaseModel):
 async def geomesh_shapefile(
         dataset: str,
         params: GeomeshShapefileArgs
-):
+) -> List[PointDataRow]:
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
