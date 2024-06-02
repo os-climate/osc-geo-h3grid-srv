@@ -46,9 +46,9 @@ location, where database_dir, and dataset_name are parameters specified in the
 configuration file.
 
 ~~~
-CONFIG_PATH="./examples/loading/h3_no_header_conf.yml" ;
+CONFIG_PATH="./examples/loading/basic/h3_no_header_conf.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8001 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ~~~
 
@@ -113,7 +113,7 @@ loaded dataset.
 ```
 CONFIG_PATH="./examples/loading/basic/h3_no_header_conf.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -126,7 +126,7 @@ loaded dataset.
 ```
 CONFIG_PATH="./examples/loading/basic/point_no_header_conf.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -139,7 +139,7 @@ loaded dataset.
 ```
 CONFIG_PATH="./examples/loading/jamaica_buildings/jamaica_building_conf.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -233,7 +233,7 @@ file, which contains the output of this example.
 ```
 CONFIG_PATH="./examples/loading/giss_temperature/giss_2022_12.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -387,7 +387,7 @@ Germany, up to resolution 7.
 ```
 CONFIG_PATH="./examples/loading/flood_data/flood_data.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -398,7 +398,7 @@ northwestern Germany, up to resolution 9.
 ```
 CONFIG_PATH="./examples/loading/flood_data/flood_data_nw_germany.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -410,6 +410,6 @@ it loads the data as a collection of points, without interpolating.
 ```
 CONFIG_PATH="./examples/loading/flood_data/flood_data_point.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```

@@ -211,7 +211,7 @@ not within this region.
 ```
 CONFIG_PATH="./examples/loading/giss_temperature/giss_2022_12.yml" ;
 
-python ./src/geoserver/cli_load.py --host localhost --port 8000 load \
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
