@@ -1,0 +1,1 @@
+The file "housing_kaggle_spain 2.json" is licensed under the Apache License Version 2.0, and was made by Kaggle (https://www.kaggle.com/)
