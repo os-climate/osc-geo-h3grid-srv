@@ -20,7 +20,8 @@ AVAILABLE_FILTERS = [
     "NW_Germany",
     "North_Germany"
     "France",
-    "Belgium"
+    "Belgium",
+    "Spain"
 ]
 
 #TODO: file is not continuous, but only contains 10, 30, 100, 300, 1000, 65535 (no data val)
@@ -135,6 +136,18 @@ def filter_belgium(geo: GeoDataFrame) -> GeoDataFrame:
         ]
     return out
 
+def filter_spain(geo: GeoDataFrame) -> GeoDataFrame:
+    min_lat = 35.50
+    max_lat = 44.31
+    min_long = -9.98
+    max_long = 4.71
+
+    out = geo[
+        (geo['latitude'] > min_lat) & (geo['latitude'] < max_lat) &
+        (geo['longitude'] > min_long) & (geo['longitude'] < max_long)
+        ]
+    return out
+
 def write_to_output(geo: GeoDataFrame, out_file: str) -> None:
     geo.to_parquet(out_file)
 
@@ -187,9 +200,12 @@ if __name__ == "__main__":
     elif fil == "Belgium":
         print("filtering for Belgium")
         out = filter_belgium(right_cols)
+    elif fil == "Spain":
+        print("filtering for Spain")
+        out = filter_spain(right_cols)
     else:
         raise Exception(f"unrecognized filter: {fil}. must"
-                        f"select from: {AVAILABLE_FILTERS}")
+                        f" select from: {AVAILABLE_FILTERS}")
 
     write_to_output(out, args.output)
 

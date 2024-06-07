@@ -385,3 +385,239 @@ python ./examples/loading/flood_data/load_all_flood.py
 
 
 
+## Correlating Flood Data with Asset Data
+
+This example will take historical flood data from Spain 
+(specifically the 10-year flood) and will correlate it with 
+a set of data on mortgages in Spain. 
+
+
+### Retrieving Data & Shapefiles
+
+The shapefiles and data used below are the same as from the earlier Belgium
+example. If you have already retrieved them, you can skip this step.
+
+Shapefiles are files that define a geographic region. They are used in this
+example to ensure that processing only happens within a target region. 
+In order to run the below examples, shapefiles will need to be downloaded from
+the following link (if not already downloaded from the GISS Temperature example 
+in the getting-started README):
+
+Shapefiles source:
+- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York): 
+
+Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
+- retrieved as a dataset from the "Geographic file formats" section, 
+"Shapefile" element, by clicking the "Whole dataset" link
+
+Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
+~~~
+mkdir -p ./data/shapefiles/WORLD
+~~~
+
+Unzip the `world-administrative-boundaries.zip` file into the
+`data/shapefiles/WORLD` directory. This should result in a 
+directory structure that looks like below:
+
+~~~
+data
+|-- shapefiles
+    |-- WORLD
+        |-- world-adminstrative-boundaries.prj
+        |-- world-adminstrative-boundaries.cpg
+        |-- world-adminstrative-boundaries.dbf
+        |-- world-adminstrative-boundaries.shp
+        |-- world-adminstrative-boundaries.shx
+~~~
+
+
+Additionally, the flood data that will be used as the 
+raw data for this example will need to be retrieved. Note that this
+data is 5GB in size.
+
+It can be retrieved from the below link
+- [Pan-European data sets of river flood probability of occurrence under present and future climate_1_all.zip](https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17)
+
+Which was retrieved from this [parent site](https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122) 
+
+Create the `data/geo_data/flood/europe_flood_data` directory as below:
+
+~~~
+mkdir -p ./data/geo_data/flood/europe_flood_data
+~~~
+
+Unzip the `Pan-European data sets of river flood probability of occurrence under present and future climate_1_all.zip`
+file into the `data/geo_data/flood/europe_flood_data` directory.
+This should result in a directory structure that looks like the below:
+
+~~~
+data
+|-- geo_data
+    |-- flood
+        |-- europe_flood_data
+            |-- data.zip
+            |-- readme_river_floods_v1.1.pdf
+~~~
+
+Create the `data/geo_data/flood/europe_flood_data/data` directory as below
+
+~~~
+mkdir -p ./data/geo_data/flood/europe_flood_data/data
+~~~
+
+Unzip the `data.zip` file into the `./data/geo_data/flood/europe_flood_data/data`
+directory. This should result in a file structure like below:
+
+~~~
+data
+|-- geo_data
+    |-- flood
+        |-- europe_flood_data
+            |-- data.zip
+            |-- readme_river_floods_v1.1.pdf
+            |-- data
+                |-- River_discharge_1971_2000_hist.dbf
+                |-- River_discharge_1971_2000_hist.prj
+                ...
+~~~
+
+### Convert Flood Tiff to Parquet
+
+There is no loader for tiff files, so the tiff file is first converted to
+a parquet file to allow for loading. This will create the output file
+`./tmp/flood_depth_10_year_spain.parquet`.
+
+~~~
+RAW="./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hist_0010y.tif" ; 
+OUT="./tmp/flood_depth_10_year_spain.parquet" ;
+FILTER="Spain" ;
+
+python ./examples/loading/flood_data/flood_to_parquet.py \
+--raw $RAW \
+--output $OUT \
+--filter $FILTER
+~~~
+
+### Load Flood Data
+
+The data will be loaded as a point dataset, with attatched cell ids
+of various resolutions, up to the maximum specified in the configuration
+file. This will create the `./tmp/flood_depth_10_year_spain.duckdb` file 
+as output.
+
+~~~
+CONFIG_PATH="./examples/loading/correlate_datasets/flood_depth_10_year_spain.yml" ;
+
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
+--config_path $CONFIG_PATH 
+~~~
+
+### Add Flood Metadata Entry
+
+In order to interact with a dataset its metadata must be registered.
+The below command will register the dataset created in previous steps.
+
+If no metadata database existed previously, this will create the 
+`./tmp/dataset_metadata.duckdb` file.
+
+~~~
+DATABASE_DIR="./tmp" ;
+DATASET_NAME="flood_depth_10_year_spain" ;
+DESCRIPTION="Flood depth in Spain during 10 year flood" ;
+VALUE_COLUMNS="{\"value\":\"REAL\"}" ;
+INTERVAL="one_time" ;
+DATASET_TYPE="point" ;
+python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
+    --database_dir $DATABASE_DIR \
+    --dataset_name $DATASET_NAME \
+    --description "$DESCRIPTION" \
+    --value_columns $VALUE_COLUMNS \
+    --interval $INTERVAL \
+    --dataset_type $DATASET_TYPE	
+~~~
+
+
+### asset UUIDs and format conversion
+
+The Mortgage data comes in the form of a json file (included in this repo), 
+and must be converted to parquet for loading. In addition in a production
+scenario asset data will often not be directly available, but instead will
+have a uuid generated and used for correlation, as a means of anonymizing the
+dataset. This script will also generate UUIDs for the dataset.
+
+~~~
+RAW="./examples/loading/correlate_datasets/housing_kaggle_spain 2.json" ;
+OUT="./tmp" ;
+
+python ./examples/loading/flood_data/asset_to_parquet.py \
+--raw "$RAW" \
+--output $OUT
+~~~
+
+### Load Asset Data
+
+This asset data will then be loaded as a point dataset. 
+
+~~~
+CONFIG_PATH="./examples/loading/correlate_datasets/spain_asset_data.yml" ;
+
+python ./src/geoserver/cli_load.py --host $HOST --port $PORT load \
+--config_path $CONFIG_PATH 
+~~~
+
+
+### Add Asset Metadata Entry
+
+In order to interact with a dataset its metadata must be registered.
+The below command will register the dataset created in previous steps.
+
+If no metadata database existed previously, this will create the 
+`./tmp/dataset_metadata.duckdb` file.
+
+~~~
+DATABASE_DIR="./tmp" ;
+DATASET_NAME="spain_asset_data" ;
+DESCRIPTION="mortgage data in Spain" ;
+VALUE_COLUMNS="{\"uuid\":\"VARCHAR\"}" ;
+INTERVAL="one_time" ;
+DATASET_TYPE="point" ;
+python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
+    --database_dir $DATABASE_DIR \
+    --dataset_name $DATASET_NAME \
+    --description "$DESCRIPTION" \
+    --value_columns $VALUE_COLUMNS \
+    --interval $INTERVAL \
+    --dataset_type $DATASET_TYPE
+~~~
+
+
+### Running the correlaton
+
+This will load the flood and asset datasets, and join them together, 
+figuring out the relevant flood depth for the mortgages in question. This
+occurs in two stages. First a join is done with the anonymized dataset, 
+which gets the associated value for each UUID. Then a second stage - which
+will likely be done by whoever provided the asset data within their environment -
+will join this correlated dataset with the original asset data, getting the 
+additional fields stripped by the anonymization process. 
+
+~~~
+FLOOD_DATASET=flood_depth_10_year_spain ;
+ASSET_DATASET=spain_asset_data ;
+NON_ANON_PARQUET="./tmp/housing_kaggle_spain 2_uuid.parquet" ;
+OUTPUT_PATH="./tmp/final_asset_correlation_spain.parquet" ;
+DB_DIR=./tmp ;
+SHAPEFILE=./data/shapefiles/WORLD/world-administrative-boundaries.shp ;
+REGION=Spain ;
+RESOLUTION=9 ;
+
+python ./examples/loading/correlate_datasets/correlate_datasets.py \
+--flood-dataset $FLOOD_DATASET \
+--asset-dataset $ASSET_DATASET \
+--non-anon-file "$NON_ANON_PARQUET" \
+--output-path $OUTPUT_PATH \
+--db-dir $DB_DIR \
+--shapefile $SHAPEFILE \
+--region $REGION \
+--resolution $RESOLUTION
+~~~

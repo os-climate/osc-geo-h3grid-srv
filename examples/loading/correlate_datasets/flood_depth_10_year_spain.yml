@@ -1,0 +1,15 @@
+loader_type: ParquetLoader
+dataset_name: flood_depth_10_year_spain
+dataset_type: point
+database_dir: ./tmp
+interval: one_time
+max_resolution: 13
+data_columns: [value]
+max_parallelism: 16
+
+file_path: ./tmp/flood_depth_10_year_spain.parquet
+mode: create
+
+shapefile: ./data/shapefiles/WORLD/world-administrative-boundaries.shp
+region: Spain
+

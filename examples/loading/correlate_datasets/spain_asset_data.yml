@@ -1,0 +1,14 @@
+loader_type: ParquetLoader
+dataset_name: spain_asset_data
+dataset_type: point
+database_dir: ./tmp
+interval: one_time
+max_resolution: 13
+data_columns: [value]
+
+file_path: ./tmp/housing_kaggle_spain 2_uuid.parquet
+mode: create
+
+shapefile: ./data/shapefiles/WORLD/world-administrative-boundaries.shp
+region: Spain
+
