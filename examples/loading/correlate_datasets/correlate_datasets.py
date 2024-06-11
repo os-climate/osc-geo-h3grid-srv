@@ -19,7 +19,9 @@ def load_dataset(
         ds_name, shapefile, region,
         None, None, None
     )
-    return point_row_to_df(dataset)
+    ds = point_row_to_df(dataset)
+    print(f"retrieved {len(ds)} rows")
+    return ds
 
 
 def point_row_to_df(rows: List[PointDataRow]) -> DataFrame:
@@ -65,7 +67,7 @@ def deanon_flood(uuid_flood: DataFrame, non_anon: DataFrame) -> DataFrame:
     return uuid_flood.set_index('uuid').join(non_anon.set_index('uuid'))
 
 def get_arg_parser():
-    parser = argparse.ArgumentParser(description="flood data converter")
+    parser = argparse.ArgumentParser(description="asset to flood correlation")
 
     parser.add_argument(
         "--flood-dataset",
@@ -123,25 +125,55 @@ if __name__ == "__main__":
     non_anon_file = args.non_anon_file
     out_path = args.output_path
 
-    flood_data = load_dataset(args.flood_dataset, db_dir, shapefile, region)
-    asset_data = load_dataset(args.asset_dataset, db_dir, shapefile, region)
-    print("datasets loaded")
-
-    flood_data_cell_avg = average_by_cell(flood_data, res)
-
-    print("flood data averaged")
-
-    correlated_anon = correlate_anonymized(flood_data_cell_avg, asset_data, res)
-
-    print("flood data correlated with anonymized uuids")
-
-    non_anon_assets = load_non_anonymzed(non_anon_file)
-    deanon = deanon_flood(correlated_anon, non_anon_assets)
 
     pandas.set_option('display.max_columns', None)
     pandas.set_option('display.width', None)
-    print("showing example rows of output")
-    print(deanon.head(5))
+
+    print("Loading flood dataset")
+    flood_data = load_dataset(args.flood_dataset, db_dir, shapefile, region)
+    print("Loading asset dataset")
+    asset_data = load_dataset(args.asset_dataset, db_dir, shapefile, region)
+    print("Datasets loaded")
+
+    print(f"Averaging flood data by cell as resolution {res}")
+    flood_data_cell_avg = average_by_cell(flood_data, res)
+    print("flood data averaged")
+
+    print("Correlating anonymized (uuid-only) asset data with flood data")
+    correlated_anon = correlate_anonymized(flood_data_cell_avg, asset_data, res)
+    print("flood data correlated with anonymized asset data")
+
+    with_flood_values = correlated_anon[correlated_anon['value'].notna()]\
+        .reset_index()
+    with_flood_values = with_flood_values.rename(
+        columns={"value": "flood_depth", "res9": "cell_id"})
+    num_with_values = len(with_flood_values)
+    num_total = len(correlated_anon)
+
+    print(f"when correlated {num_with_values}/{num_total}"
+          f" assets had non-zero flood depth.")
+
+    print("\nshowing 5 example rows from correlated anonymized data:")
+
+    print(with_flood_values.head(5))
+
+
+
+
+    print("\nThe following steps require access to the non-anonymized data,"
+          " and in production would be performed at the client site, rather"
+          " than on the geo server itself. ")
+    print("Loading non-anonymized data.")
+    non_anon_assets = load_non_anonymzed(non_anon_file)
+    print("Adding additional fields from de-anonymized data to output")
+    deanon = deanon_flood(correlated_anon, non_anon_assets)
+    deanon = deanon.rename(columns={"value": "flood_depth"}).reset_index()
+
+    print("\nshowing 5 example rows from de-anonymized data")
+
+
+
+    print(deanon[deanon['flood_depth'].notna()].head(5))
 
     print("correlated data combined with non-anoymized data")
 

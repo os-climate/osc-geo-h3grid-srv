@@ -32,7 +32,7 @@ def save_assets(df: DataFrame, out_path: str) -> None:
     df.to_parquet(path=out_path)
 
 def get_arg_parser():
-    parser = argparse.ArgumentParser(description="flood data converter")
+    parser = argparse.ArgumentParser(description="asset to parquet converter")
 
     parser.add_argument(
         "--raw",
@@ -64,8 +64,14 @@ if __name__ == "__main__":
     uuid_file_name = filename_prefix + "_uuid.parquet"
     save_assets(with_uuid, os.path.join(out_dir, uuid_file_name))
 
+    print(f"Wrote {len(with_uuid)} rows to"
+          f" {os.path.join(out_dir, uuid_file_name)}")
+
     anonymized = filter_cols(with_uuid)
     anon_file_name = filename_prefix + "_anonymized.parquet"
     save_assets(anonymized, os.path.join(out_dir, anon_file_name))
+
+    print(f"Wrote {len(anonymized)} rows to"
+          f" {os.path.join(out_dir, anon_file_name)}")
 
     print("done")

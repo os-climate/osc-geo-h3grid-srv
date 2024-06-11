@@ -24,7 +24,126 @@ logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 logger = logging.getLogger(__name__)
 
 
-class Visualizer:
+class AbstractVisualizer:
+
+    min_lat: float
+    max_lat: float
+    min_long: float
+    max_long: float
+
+    def _get_blank_map(self) -> folium.Map:
+        lat_range = self.max_lat - self.min_lat
+        long_range = self.max_long - self.min_long
+        # +1 at end because most screens are larger than the 256 pixels zoom
+        #  level is based around
+        zoom_level_lat = -math.log2(lat_range / 180) + 1
+        zoom_level_long = -math.log2(long_range / 360) + 1
+        zoom = math.ceil(min(zoom_level_lat, zoom_level_long))
+
+        geo_map = folium.Map(
+            location=self._get_map_center(),
+            min_lon=math.floor(self.min_long),
+            min_lat=math.floor(self.min_lat),
+            max_lon=math.ceil(self.max_long),
+            max_lat=math.ceil(self.max_lat),
+            width="100%",
+            height="100%",
+            max_bounds=True,
+            png_enabled=True,
+            min_zoom=zoom,
+            prefer_canvas=True
+        )
+        sw = [self.min_lat, self.min_long]
+        ne = [self.max_lat, self.max_long]
+        geo_map.fit_bounds(bounds=[sw, ne])
+        return geo_map
+
+    def _get_map_center(self) -> Tuple[float, float]:
+        avg_lat = (self.min_lat + self.max_lat) / 2
+        avg_long = (self.min_long + self.max_long) / 2
+        return avg_lat, avg_long
+
+
+class PointLocationVisualizer(AbstractVisualizer):
+    def __init__(
+            self,
+            dataset: DataFrame,
+            value_col: str,
+            min_lat: Optional[float],
+            max_lat: Optional[float],
+            min_long: Optional[float],
+            max_long: Optional[float]
+    ):
+        self.dataset = dataset
+        if min_lat is None:
+            self.min_lat = dataset['latitude'].min()
+        else:
+            self.min_lat = min_lat
+
+        if max_lat is None:
+            self.max_lat = dataset['latitude'].max()
+        else:
+            self.max_lat = max_lat
+
+        if min_long is None:
+            self.min_long = dataset['longitude'].min()
+        else:
+            self.min_long = min_long
+
+        if max_long is None:
+            self.max_long = dataset['longitude'].max()
+        else:
+            self.max_long = max_long
+
+        self.value_col = value_col
+
+    def visualize_dataset(
+            self,
+            output_file: str
+    ):
+
+        if os.path.exists(output_file):
+            raise BgsAlreadyExistsException(
+                f"output file {output_file} already exists")
+        geo_map = self._get_blank_map()
+
+        self.add_dataset_to_map(geo_map)
+
+        geo_map.save(output_file)
+        logger.info(f"created visualization file at map_path:{output_file}")
+
+    def add_dataset_to_map(self, geo_map: folium.Map) -> None:
+        # select only the columns we need
+        lat_long_value = self.dataset[['latitude', 'longitude', self.value_col]]
+
+        print(f"visualizing {len(self.dataset)} rows")
+
+        row_count = 0
+        for cell, row in lat_long_value.iterrows():
+            if row_count % 10000 == 0:
+                print(f"processing row {row_count}")
+            lat = row['latitude']
+            long = row['longitude']
+            val = row[self.value_col]
+            self.add_marker(geo_map, lat, long, val)
+            row_count = row_count + 1
+
+
+    def add_marker(
+            self,
+            geo_map: folium.Map,
+            latitude: float,
+            longitude: float,
+            data_value: str
+    ) -> None:
+
+        folium.Marker(
+            location=[latitude, longitude],
+            popup=data_value
+        ).add_to(geo_map)
+
+
+class HexGridVisualizer(AbstractVisualizer):
 
     def __init__(
             self,
@@ -107,21 +226,43 @@ class Visualizer:
             raise BgsAlreadyExistsException(
                 f"output file {output_file} already exists")
 
+        geo_map = self._get_blank_map()
+
+        self.add_dataset_to_map(geo_map, resolution, threshold, ds_type)
+
+        geo_map.save(output_file)
+        logger.info(f"created visualization file at map_path:{output_file}")
+
+    def add_dataset_to_map(
+            self,
+            geo_map: folium.Map,
+            resolution: int,
+            threshold: Optional[float],  # between 0 and 1
+            ds_type: str = "h3"
+    ) -> None:
         if ds_type == "h3":
-            self.draw_h3_ds(resolution, output_file, threshold)
+            logger.info("processing data as h3 dataset")
+            self.draw_h3_ds(resolution, threshold, in_map=geo_map)
         if ds_type == "point":
-            self.draw_point_ds(resolution, output_file, threshold)
+            logger.info("processing data as point dataset")
+            self.draw_point_ds(resolution, threshold, in_map=geo_map)
+        else:
+            raise InvalidArgumentException(
+                f"unrecognized dataset type: {ds_type}")
 
     def draw_h3_ds(
             self,
             resolution: int,
-            output_file: str,
             threshold: Optional[float],  # between 0 and 1
-    ) -> None:
+            in_map: Optional[folium.Map] = None
+    ) -> folium.Map:
         h3_cells = self._get_h3_in_boundary(resolution)
         num_cells = len(h3_cells)
         logger.info(f"visualizing {num_cells} cells")
-        geo_map = self._get_blank_map()
+        if in_map is None:
+            geo_map = self._get_blank_map()
+        else:
+            geo_map = in_map
 
         max_val = self.dataset[self.value_col].max()
         min_value = self.dataset[self.value_col].min()
@@ -154,16 +295,15 @@ class Visualizer:
                 cell, cell_value, min_value, max_colour_value, geo_map
             )
 
-        geo_map.save(output_file)
-        logger.info(f"created visualization file at map_path:{output_file}")
+        return geo_map
 
     def draw_point_ds(
             self,
             resolution: int,
-            output_file: str,
             threshold: Optional[float],  # between 0 and 1
-            multiple_value_handling: str = 'mean'  # max, mean, min
-    ) -> None:
+            multiple_value_handling: str = 'mean',  # max, mean, min
+            in_map: Optional[folium.Map] = None
+    ) -> folium.Map:
         res_col = "cell"
         ds = self.dataset[[res_col, self.value_col]]
         groups = ds.groupby([res_col])
@@ -183,7 +323,10 @@ class Visualizer:
             )
         num_cells = len(working_ds.index)
 
-        geo_map = self._get_blank_map()
+        if in_map is None:
+            geo_map = self._get_blank_map()
+        else:
+            geo_map = in_map
 
         max_val = self.dataset[self.value_col].max()
         min_value = self.dataset[self.value_col].min()
@@ -215,8 +358,7 @@ class Visualizer:
             self._add_cell_to_map(
                 cell, val, min_value, max_colour_value, geo_map)
 
-        geo_map.save(output_file)
-        logger.info(f"created visualization file at map_path:{output_file}")
+        return geo_map
 
     def _add_cell_to_map(
             self,
@@ -232,7 +374,7 @@ class Visualizer:
         hex_color = self.rgb_to_hex(new_rgb)
         opacity = self.scale_opacity(
             max_val, min_val, cell_value,
-            0.8, 0
+            0.8, 0.2
         )
 
         polygon = folium.Polygon(
@@ -295,11 +437,6 @@ class Visualizer:
         overlap_cells = h3.polyfill(geojson, res)
         return set(overlap_cells)
 
-    def _get_map_center(self) -> Tuple[float, float]:
-        avg_lat = (self.min_lat + self.max_lat) / 2
-        avg_long = (self.min_long + self.max_long) / 2
-        return avg_lat, avg_long
-
     def _adjust_rgb(
             self,
             max: float,
@@ -336,7 +473,7 @@ class Visualizer:
             min_data: float,
             current_data: float,
             max_opacity: float = 1.0,
-            min_opacity: float = 0.0
+            min_opacity: float = 0.2
     ) -> float:
         if current_data > max_data:
             return max_opacity
@@ -348,3 +485,7 @@ class Visualizer:
 
         return min_opacity + (
                     max_opacity - min_opacity) * adjustment_factor_data
+
+
+
+

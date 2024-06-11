@@ -42,6 +42,7 @@ by pip. Use the below commands to install into venv.
 ~~~
 cd ./src
 pip install -e .
+cd ..
 ~~~
 
 ### Configuring the CLI
@@ -76,6 +77,14 @@ To disable verbose logging, unset VERBOSE:
 ~~~~
 VERBOSE=""
 ~~~~
+
+
+### Create directories
+
+Create the directories needed for running the examples:
+~~~
+mkdir ./tmp
+~~~
 
 
 ## Belgian Flood Data as Interpolated H3
@@ -500,7 +509,7 @@ python ./examples/loading/flood_data/flood_to_parquet.py \
 
 ### Load Flood Data
 
-The data will be loaded as a point dataset, with attatched cell ids
+The data will be loaded as a point dataset, with attached cell ids
 of various resolutions, up to the maximum specified in the configuration
 file. This will create the `./tmp/flood_depth_10_year_spain.duckdb` file 
 as output.

@@ -21,7 +21,7 @@ from geoserver.bgsexception import DBDirNotExistsException,\
     DataSetNotRegisteredException, \
     IntervalInvalidException, InvalidArgumentException, \
     OperationUnsupportedException
-from geoserver.visualizer import Visualizer
+from geoserver.visualizer import HexGridVisualizer
 from geoserver.metadata import MetadataDB
 from geoserver.shape import Shape
 
@@ -1307,7 +1307,7 @@ class Geomesh:
         return scale_factor
 
     def _visualize_map(self, cells: List[str], map_path: str) -> str:
-        return Visualizer.visualize_h3_cells(cells, map_path)
+        return HexGridVisualizer.visualize_h3_cells(cells, map_path)
 
 
     def _get_db_path(self, db_name: str) -> str:
