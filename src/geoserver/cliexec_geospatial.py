@@ -13,7 +13,8 @@ from typing import List, Optional, Dict, Any, Tuple
 import pandas
 
 from geoserver import server, routers
-from geoserver.visualizer import Visualizer
+from geoserver.bgsexception import InvalidArgumentException
+from geoserver.visualizer import HexGridVisualizer, PointLocationVisualizer
 from metadata import MetadataDB
 from geoserver.utilities import httputils
 from geomesh import Geomesh
@@ -273,7 +274,8 @@ class CliExecGeospatial:
             year: Optional[int],
             month: Optional[int],
             day: Optional[int],
-            ds_type: str
+            ds_type: str,
+            visualizer_type: str = "HexGridVisualizer"
     ):
         geo = Geomesh(database_dir)
         ds = geo.bounding_box_get(
@@ -288,14 +290,33 @@ class CliExecGeospatial:
             day
         )
         ds_pandas = pandas.json_normalize(ds)
-        vis = Visualizer(
-            ds_pandas,
-            value_column,
-            max_color_rgb,
-            min_lat,
-            max_lat,
-            min_long,
-            max_long
-        )
-        vis.visualize_dataset(resolution, output_file, threshold, ds_type)
+
+        if visualizer_type == "HexGridVisualizer":
+            vis = HexGridVisualizer(
+                ds_pandas,
+                value_column,
+                max_color_rgb,
+                min_lat,
+                max_lat,
+                min_long,
+                max_long
+            )
+            vis.visualize_dataset(resolution, output_file, threshold, ds_type)
+
+        elif visualizer_type == "PointLocationVisualizer":
+            if ds_type != "point":
+                raise InvalidArgumentException(
+                    "PointLocationVisualizer visualizer type is not compatible"
+                    f" with dataset type {ds_type}"
+                )
+            vis = PointLocationVisualizer(
+                ds_pandas,
+                value_column,
+                min_lat,
+                max_lat,
+                min_long,
+                max_long
+            )
+            vis.visualize_dataset(output_file)
+
         print(f"created visualization file at location: {output_file}")

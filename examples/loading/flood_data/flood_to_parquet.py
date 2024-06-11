@@ -209,4 +209,4 @@ if __name__ == "__main__":
 
     write_to_output(out, args.output)
 
-    print("done")
+    print(f"Wrote {len(out)} rows to {args.output}")

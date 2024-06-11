@@ -72,7 +72,7 @@ def addmeta(parser: argparse.ArgumentParser):
         args.dataset_type
     )
 
-    print(res)
+    print(f"Created Metadata Entry for {res}")
 
 
 def showmeta(parser: argparse.ArgumentParser):
@@ -231,7 +231,8 @@ def visualize_dataset(parser: argparse.ArgumentParser):
         args.year,
         args.month,
         args.day,
-        args.ds_type
+        args.ds_type,
+        args.visualizer_type
     )
 
 
@@ -497,6 +498,13 @@ def add_viualize_dataset_parser(
         type=str,
         default="h3",
         help="the type of ds to process. acceptable values: [h3, point]"
+    )
+    visualize_parser.add_argument(
+        "--visualizer-type", required=False,
+        type=str,
+        default="HexGridVisualizer",
+        help="the type of ds to process. acceptable values: ["
+             "HexGridVisualizer, PointLocationVisualizer]"
     )
 
 

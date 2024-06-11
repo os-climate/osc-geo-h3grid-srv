@@ -39,6 +39,7 @@ by pip. Use the below commands to install into venv.
 ~~~
 cd ./src
 pip install -e .
+cd ..
 ~~~
 
 ### Starting server in local mode

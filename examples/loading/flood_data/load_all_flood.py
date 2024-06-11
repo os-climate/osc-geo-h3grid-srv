@@ -19,7 +19,7 @@ from geoserver.bgsexception import BgsAlreadyExistsException
 from geoserver.geomesh import Geomesh
 from geoserver.loader import LoaderFactory
 from geoserver.metadata import MetadataDB
-from geoserver.visualizer import Visualizer
+from geoserver.visualizer import HexGridVisualizer
 
 temp_dir = "./tmp/load_all_flood/"
 
@@ -289,7 +289,7 @@ def visualize_ds(
         None
     )
     ds_pandas = pandas.json_normalize(ds)
-    vis = Visualizer(
+    vis = HexGridVisualizer(
         ds_pandas,
         "value",
         (0, 0, 255),
