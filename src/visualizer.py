@@ -14,10 +14,6 @@ import h3
 from pandas import DataFrame
 import folium
 
-from geoserver import dataset_utilities
-from geoserver.bgsexception import InvalidArgumentException, \
-    BgsAlreadyExistsException
-
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
@@ -103,7 +99,7 @@ class PointLocationVisualizer(AbstractVisualizer):
     ):
 
         if os.path.exists(output_file):
-            raise BgsAlreadyExistsException(
+            raise ValueError(
                 f"output file {output_file} already exists")
         geo_map = self._get_blank_map()
 
@@ -223,7 +219,7 @@ class HexGridVisualizer(AbstractVisualizer):
     ) -> None:
 
         if os.path.exists(output_file):
-            raise BgsAlreadyExistsException(
+            raise ValueError(
                 f"output file {output_file} already exists")
 
         geo_map = self._get_blank_map()
@@ -243,11 +239,11 @@ class HexGridVisualizer(AbstractVisualizer):
         if ds_type == "h3":
             logger.info("processing data as h3 dataset")
             self.draw_h3_ds(resolution, threshold, in_map=geo_map)
-        if ds_type == "point":
+        elif ds_type == "point":
             logger.info("processing data as point dataset")
             self.draw_point_ds(resolution, threshold, in_map=geo_map)
         else:
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"unrecognized dataset type: {ds_type}")
 
     def draw_h3_ds(
@@ -317,7 +313,7 @@ class HexGridVisualizer(AbstractVisualizer):
         elif multiple_value_handling == 'min':
             working_ds = groups.min()
         else:
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"multiple_value_handling {multiple_value_handling} was not"
                 f" valid. valid options are: [mean, max, min]"
             )

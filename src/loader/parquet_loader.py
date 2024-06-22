@@ -11,9 +11,7 @@ from dataclasses import dataclass
 import pandas
 from pandas import DataFrame
 
-from geoserver.bgsexception import BgsNotFoundException, WrongFileTypeException
-from geoserver.loader import AbstractLoader, AbstractLoaderConfig
-
+from loader.abstract_loader import AbstractLoader, AbstractLoaderConfig
 
 @dataclass
 class ParquetLoaderConfig(AbstractLoaderConfig):
@@ -42,11 +40,11 @@ class ParquetLoader(AbstractLoader):
         conf = self.get_config()
 
         if not os.path.exists(conf.file_path):
-            raise BgsNotFoundException(
+            raise ValueError(
                 f"file {conf.file_path} does not exist")
 
         if os.path.isdir(conf.file_path):
-            raise WrongFileTypeException(
+            raise ValueError(
                 f"file {conf.file_path} is a directory, not a file"
             )
 
@@ -64,7 +62,7 @@ class ParquetLoader(AbstractLoader):
 
     def get_raw_dataset(self) -> DataFrame:
         if self.dataset is None:
-            raise BgsNotFoundException(
+            raise ValueError(
                 "dataset not yet loaded. Call the load() method before"
                 " attempting to use the dataset.")
         return self.dataset

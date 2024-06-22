@@ -11,15 +11,15 @@ The geospatial components include:
 ## Shapefiles
 
 Shapefiles are files that define a geographic region. They are used in this
-example to ensure that processing only happens within a target region. 
+example to ensure that processing only happens within a target region.
 In order to run the below examples, shapefiles will need to be downloaded from
 the following link:
 
 Shapefiles source:
-- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York): 
+- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
 
 Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
-- retrieved as a dataset from the "Geographic file formats" section, 
+- retrieved as a dataset from the "Geographic file formats" section,
 "Shapefile" element, by clicking the "Whole dataset" link
 
 Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
@@ -28,7 +28,7 @@ mkdir -p ./data/shapefiles/WORLD
 ~~~
 
 Unzip the `world-administrative-boundaries.zip` file into the
-`data/shapefiles/WORLD` directory. This should result in a 
+`data/shapefiles/WORLD` directory. This should result in a
 directory structure that looks like below:
 
 ~~~
@@ -44,7 +44,7 @@ data
 
 ## Geospatial Data
 
-The GISS temperature dataset contains data on global temperatures, 
+The GISS temperature dataset contains data on global temperatures,
 and is used as the raw data for the examples in this README. It is used as sample
 data for some of the below examples. It can be retrieved from the below links:
 
@@ -61,7 +61,7 @@ below command (if it does not already exist):
 mkdir -p data/geo_data/temperatures
 ~~~
 
-Copy both the `v4.mean_GISS_homogenized.txt` and `stations.txt` to the 
+Copy both the `v4.mean_GISS_homogenized.txt` and `stations.txt` to the
 `data/geo_data/temperatures` directory.
 
 See [Data Loading](/docs/README-loading.md) for instructions on turning this data into
@@ -79,19 +79,19 @@ the environment and vactivate scripts must be run prior.
 ## Dataset types
 
 There are two types of dataset supported by the geospatial server, and each
-has slightly different interactions with endpoints. 
+has slightly different interactions with endpoints.
 
 The first type of dataset is a continuous or h3 dataset. This is a dataset where data
-is interpolated between known values to generate a distribution with 
+is interpolated between known values to generate a distribution with
 values on hexes that do not contain data points themselves, but that
 have data points nearby them. This can be useful for information like
-temperature data, where the underlying distribution varies continuously, 
-and nearby data can be used to predict intermediate values without large errors. 
+temperature data, where the underlying distribution varies continuously,
+and nearby data can be used to predict intermediate values without large errors.
 
 The second type of dataset is a point dataset. This is a dataset where
-data is stored as a raw collection of points, without interpolation. This 
-can be useful for datasets like asset locations, where data does not vary 
-continuously between points, and knowing nearby points cannot be used to 
+data is stored as a raw collection of points, without interpolation. This
+can be useful for datasets like asset locations, where data does not vary
+continuously between points, and knowing nearby points cannot be used to
 predict values as unknown points.
 
 ## Command Line Interpreter (CLI)
@@ -99,7 +99,7 @@ predict values as unknown points.
 A CLI is available that makes it easy to interact
 with the service:
 ~~~~
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT --help
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT --help
 
 usage: cli_geospatial.py [-h] [--verbose] --host HOST --port PORT
                          {addmeta,showmeta,filter,visualize,visualize-dataset,initialize,show} ...
@@ -141,7 +141,7 @@ RESOLUTION=3 ;
 RADIUS=200 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -158,7 +158,7 @@ LATITUDE=17.9736 ;
 LONGITUDE=-76.7907 ;
 RADIUS=200 ;
 TYPE=point ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -171,7 +171,7 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show
 Another offered service is to retrieves data for the
 h3 cell that includes the specified latitude and longitude.
 This endpoint exists solely for continuous datasets,
-with no equivalent endpoint for point datasets. 
+with no equivalent endpoint for point datasets.
 
 ~~~
 DATASET="giss_temperature_dec_2022" ;
@@ -180,7 +180,7 @@ LONGITUDE=-79.059 ;
 RESOLUTION=3 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -202,7 +202,7 @@ CELL="832b9bfffffffff" ;
 RADIUS=200 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell "$CELL" \
     --radius $RADIUS \
@@ -216,7 +216,7 @@ DATASET="jamaica_buildings" ;
 CELL="8867328a6dfffff" ;
 RADIUS=200 ;
 TYPE=point ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell $CELL \
     --radius $RADIUS \
@@ -225,7 +225,7 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show
 
 ### Get Data for a Specific Cell
 
-Retrieves data for a specified h3 cell, identified by ID. 
+Retrieves data for a specified h3 cell, identified by ID.
 For continuous datasets, this will return only the value
 in the specified cell. For point datasets this will return
 all values within the bounds of the specified cell.
@@ -236,7 +236,7 @@ DATASET="giss_temperature_dec_2022" ;
 CELL="832b9bfffffffff" ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell "$CELL" \
     --year $YEAR \
@@ -248,7 +248,7 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show
 DATASET="jamaica_buildings" ;
 CELL="8867328a6dfffff" ;
 TYPE=point ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell $CELL \
     --radius $RADIUS \
@@ -272,7 +272,7 @@ RESOLUTION=3 ;
 REGION="Canada" ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
@@ -287,11 +287,11 @@ DATASET="jamaica_buildings"
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 REGION="Jamaica" ;
 TYPE=point ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
-	--type $TYPE	
+	--type $TYPE
 ~~~
 
 ### Filter Data based on shapefile
@@ -301,12 +301,12 @@ represent countries, regions, or areas of the globe.
 
 The `filter` command finds all H3 cells of a given
 resolution that are contained within the bounds of any region
-within a provided shapefile. 
+within a provided shapefile.
 
 This is intended to allow the filtered results to be put into a file that
 can be later used for the visualize command.
 
-The below command uses the world shapefile to identify all 
+The below command uses the world shapefile to identify all
 h3 cells that fall within - or intersect - a country's borders.
 
 This example will generate an output containing these cells' IDs within
@@ -316,7 +316,7 @@ the `./samples/cells-3.json` file.
 RESOLUTION=3 ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 TOLERANCE=0.1 ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter \
     --shapefile "$SHAPEFILE" \
     --resolution $RESOLUTION \
     --tolerance $TOLERANCE \
@@ -332,7 +332,7 @@ to create a visualization of those cells:
 RESOLUTION=3 ;
 CELLS_PATH="./samples/cells-WORLD-$RESOLUTION.json" ;
 MAP_PATH="./samples/cells-WORLD-$RESOLUTION.html" ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize \
     --cells_path $CELLS_PATH \
     --map_path $MAP_PATH
 ~~~~
@@ -342,12 +342,12 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visu
 The `visualize-dataset` command allows a visual display of a numerical dataset
 to be displayed on a map. It will generate an output html file that can be viewed
 to see the visualization. Colour scale will vary linearly between the max and min value
-in the dataset, with the maximum color value set in the max-color argument. 
+in the dataset, with the maximum color value set in the max-color argument.
 
 A settable threshold exists, and the visualization will not draw parts
 of the grid that fall below a threshold value. Threshold is
 calculated as min + ((max - min) * threshold), and any values below this will not be displayed.
-Setting a threshold allows for faster generation of visualization, especially 
+Setting a threshold allows for faster generation of visualization, especially
 when there are large chunks of data with minimum or near-minimum values that
 do not meaningfully affect the information the visualization is trying to convey.
 
@@ -366,7 +366,7 @@ MIN_LONG=4.5 ;
 MAX_LONG=16.5 ;
 THRESHOLD=0.1 ;
 
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
 --database-dir $DATABASE_DIR \
 --dataset $DATASET \
 --resolution $RESOLUTION \
@@ -377,7 +377,7 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visu
 --max-lat $MAX_LAT \
 --min-long $MIN_LONG \
 --max-long $MAX_LONG \
---threshold $THRESHOLD 
+--threshold $THRESHOLD
 ~~~
 
 
@@ -385,8 +385,8 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visu
 
 In order to visualize point datasets, the `ds-type` parameter will need
 to be supplied, and set to "point". This will calculate a visualization by
-taking the mean value of all points that fall within an h3 cell, at the 
-appropriate resolution. 
+taking the mean value of all points that fall within an h3 cell, at the
+appropriate resolution.
 
 ~~~
 DATABASE_DIR="./tmp" ;
@@ -404,7 +404,7 @@ MAX_LONG=16.5 ;
 THRESHOLD=0.1 ;
 DS_TYPE="point" ;
 
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
 --database-dir $DATABASE_DIR \
 --dataset $DATASET \
 --resolution $RESOLUTION \
@@ -432,7 +432,7 @@ DESCRIPTION="Temperature data for the entire globe" ;
 VALUE_COLUMNS="{\"temperature\":\"REAL\"}" ;
 INTERVAL="monthly" ;
 DATASET_TYPE="h3" ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
@@ -448,7 +448,7 @@ all datasets.
 
 ~~~
 DATABASE_DIR="./tmp" ;
-python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
+python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
     --database_dir $DATABASE_DIR
 ~~~
 
@@ -456,9 +456,9 @@ python ./src/geoserver/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show
 ## REST Interface
 
 This describes the REST APIs that can be used to access datasets registered
-with the server. In order to retrieve data for a dataset, it must first be 
+with the server. In order to retrieve data for a dataset, it must first be
 loaded (see [loading README](./README-loading.md)), and registered with
-the `addmeta` command line command. 
+the `addmeta` command line command.
 
 ### Get temperature by latitude and longitude
 
@@ -466,7 +466,7 @@ the `addmeta` command line command.
 
 To access all temperature data within a specified radius of a point,
 access the `/api/geomesh/latlong/radius/{dataset_name}` endpoint for
-continuous datasets, or the `/api/point/latlong/radius/{dataset_name}` 
+continuous datasets, or the `/api/point/latlong/radius/{dataset_name}`
 endpoint for point datasets.
 
 Arguments required

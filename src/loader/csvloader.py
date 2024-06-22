@@ -12,11 +12,7 @@ from typing import List, Dict
 
 from pandas import DataFrame
 
-from geoserver.bgsexception import WrongColumnNumberException, \
-    InvalidColumnTypeException, \
-    BgsException, BgsNotFoundException, WrongFileTypeException, ConfigException
-from geoserver.loader.abstract_loader import AbstractLoaderConfig, \
-    AbstractLoader
+from loader.abstract_loader import AbstractLoaderConfig, AbstractLoader
 
 SUPPORTED_DATA_TYPES = [
     "float",
@@ -50,7 +46,7 @@ class CSVLoader(AbstractLoader):
     ):
         for t in config.columns.values():
             if t not in SUPPORTED_DATA_TYPES:
-                raise InvalidColumnTypeException(
+                raise ValueError(
                     f"column type {t} is not a supported type."
                     f" supported types are {SUPPORTED_DATA_TYPES}"
                 )
@@ -77,7 +73,7 @@ class CSVLoader(AbstractLoader):
                     is_first = False
 
                 if len(row) != len(conf.columns):
-                    raise WrongColumnNumberException(
+                    raise ValueError(
                         f"configuration expects {len(conf.columns)} columns,"
                         f" but row had {len(row)} columns."
                     )
@@ -107,16 +103,16 @@ class CSVLoader(AbstractLoader):
         conf = self.get_config()
 
         if not os.path.exists(conf.file_path):
-            raise BgsNotFoundException(f"file {conf.file_path} does not exist")
+            raise ValueError(f"file {conf.file_path} does not exist")
 
         if os.path.isdir(conf.file_path):
-            raise WrongFileTypeException(
+            raise ValueError(
                 f"file {conf.file_path} is a directory, not a file"
             )
 
         for name, col_type in conf.columns.items():
             if col_type not in SUPPORTED_DATA_TYPES:
-                raise InvalidColumnTypeException(
+                raise ValueError(
                     f"column type {col_type} for column {name}"
                     f" is not a supported type. supported types are"
                     f" {SUPPORTED_DATA_TYPES}"
@@ -124,7 +120,7 @@ class CSVLoader(AbstractLoader):
 
         for column_name in conf.data_columns:
             if column_name not in conf.columns.keys():
-                raise ConfigException(
+                raise ValueError(
                     f"column {column_name} in data_columns is not"
                     f" present in columns configuration element."
                 )
@@ -133,7 +129,7 @@ class CSVLoader(AbstractLoader):
 
     def get_raw_dataset(self) -> DataFrame:
         if self.dataset is None:
-            raise BgsNotFoundException(
+            raise ValueError(
                 "dataset not yet loaded. Call the load() method before"
                 " attempting to use the dataset.")
         return self.dataset
@@ -144,7 +140,7 @@ class CSVLoader(AbstractLoader):
             type_str: str
     ):
         if type_str not in SUPPORTED_DATA_TYPES:
-            raise InvalidColumnTypeException(
+            raise ValueError(
                 f"cannot cast str to {type_str} as type is unsupported."
                 f" supported types are {SUPPORTED_DATA_TYPES}"
             )
@@ -155,6 +151,6 @@ class CSVLoader(AbstractLoader):
         elif type_str == "float":
             return float(s)
         else:
-            raise BgsException(
+            raise ValueError(
                 f"conversion of supported type {type_str} not yet implemented"
             )

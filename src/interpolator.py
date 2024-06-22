@@ -17,10 +17,9 @@ import pandas
 from pandas import DataFrame
 from scipy.spatial import cKDTree
 
-from geoserver import executor, geomesh
-from geoserver.geomesh import Geomesh
-from geoserver.shape import Shape
-from geoserver.utilities import duckdbutils
+import executor
+import geomesh
+import shape
 
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -141,9 +140,9 @@ class Interpolator:
 
 
         if shapefile is not None:
-            buffer = Geomesh.get_buffer(resolution)
-            shape = Shape(shapefile)
-            cells = list(shape.get_h3_in_shape(
+            buffer = geomesh.Geomesh.get_buffer(resolution)
+            shp = shape.Shape(shapefile)
+            cells = list(shp.get_h3_in_shape(
                 buffer,
                 resolution,
                 reverse_coords=True,

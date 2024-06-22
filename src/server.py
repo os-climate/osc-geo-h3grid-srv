@@ -14,10 +14,10 @@ import yaml
 from fastapi import FastAPI, Request, WebSocket, HTTPException
 from pydantic import BaseModel
 
-from bgsexception import BgsException
 from geomesh import Geomesh
-from geoserver import state
-from geoserver.routers import geomesh_router, point_router
+import state
+from routers.geomesh_router import router as geomesh_router
+from routers.point_router import router as point_router
 
 # Set up logging
 LOGGING_FORMAT = \
@@ -47,10 +47,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger.info(f"running with args: {args}")
+    logger.info(f"Running with args: {args}")
 
     with open(args.configuration, 'r') as file:
         configuration = yaml.safe_load(file)
+
+    logger.info(f"Using configuration:{configuration}")
 
     host = configuration['host']
     port = configuration['port']

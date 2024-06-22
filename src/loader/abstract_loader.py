@@ -15,12 +15,8 @@ import h3
 import pandas
 from pandas import DataFrame
 
-import geoserver.utilities.duckdbutils
-from geoserver.bgsexception import BgsAlreadyExistsException, ConfigException, \
-    BgsNotFoundException, WrongFileTypeException, BgsException
-from geoserver.interpolator import Interpolator
-from geoserver.shape import Shape
-from geoserver.utilities import duckdbutils
+from utilities import duckdbutils
+import interpolator
 
 h3_mandatory_cols = [
     "cell",
@@ -105,37 +101,37 @@ class AbstractLoader(ABC):
         conf = self.get_config()
 
         if conf.dataset_name is None:
-            raise ConfigException("mandatory parameter dataset_name is empty")
+            raise ValueError("mandatory parameter dataset_name is empty")
         if conf.dataset_type is None:
-            raise ConfigException("mandatory parameter dataset_type is empty")
+            raise ValueError("mandatory parameter dataset_type is empty")
 
         if conf.database_dir is None:
-            raise ConfigException("mandatory parameter database_dir is empty")
+            raise ValueError("mandatory parameter database_dir is empty")
         elif not os.path.exists(conf.database_dir):
-            raise BgsNotFoundException(
+            raise ValueError(
                 f"file {conf.database_dir} does not exist")
         elif os.path.isfile(conf.database_dir):
-            raise WrongFileTypeException(
+            raise ValueError(
                 f"database_dir: {conf.database_dir} was a file, not a directory"
             )
 
         if conf.interval is None:
-            raise ConfigException("mandatory parameter interval is empty")
+            raise ValueError("mandatory parameter interval is empty")
         # TODO: validate that interval string is on valid interval list
 
         if conf.max_resolution is None:
-            raise ConfigException("mandatory parameter max_resolution is empty")
+            raise ValueError("mandatory parameter max_resolution is empty")
         if conf.max_resolution > 15 or conf.max_resolution < 0:
-            raise ConfigException(
+            raise ValueError(
                 "h3 resolutions must be between 0 and 15. provided resolution"
                 f" was {conf.max_resolution}"
             )
 
         if conf.data_columns is None or len(conf.data_columns) == 0:
-            raise ConfigException("mandatory parameter data_columns is empty")
+            raise ValueError("mandatory parameter data_columns is empty")
 
         if conf.mode not in LOADING_MODES:
-            raise ConfigException(
+            raise ValueError(
                 f"loading mode {conf.mode} is not valid. valid modes are "
                 f"{LOADING_MODES}"
             )
@@ -149,7 +145,7 @@ class AbstractLoader(ABC):
         # dataset assumed to have longitude, latitude columns
 
         meta = self.get_config()
-        interpolator = Interpolator(geo_out_db_dir=meta.database_dir)
+        intplr = interpolator.Interpolator(geo_out_db_dir=meta.database_dir)
 
         for resolution in range(0, meta.max_resolution + 1):
             table_name = meta.dataset_name + f"_{resolution}"
@@ -162,14 +158,14 @@ class AbstractLoader(ABC):
             sql = ""
             if exists:
                 if mode == "create":
-                    raise BgsException(
+                    raise ValueError(
                         f"table {table_name} already exists."
                         f"cannot insert into table in 'create' mode")
                 elif mode == "insert":
                     if len(meta.get_time_cols()) == 0:
                         # TODO: also check that if time cols are present,
                         #  that the data does not overlap existing values
-                        raise BgsAlreadyExistsException(
+                        raise ValueError(
                             "Cannot insert into a h3 dataset without specifying"
                             " at least one time column."
                         )
@@ -185,7 +181,7 @@ class AbstractLoader(ABC):
             logger.info(f"interpolating for resolution: {resolution}")
             # IDE says this is unused, but it is referred to by name in the sql
             #  variable, which is able to find it by name
-            interpolated = interpolator.interpolate_df(
+            interpolated = intplr.interpolate_df(
                 input_data=this_res_ds,
                 cols_to_interpolate=meta.data_columns,
                 time_cols=meta.get_time_cols(),
@@ -201,7 +197,6 @@ class AbstractLoader(ABC):
                 #  can happen with small regions at very low resolutions
                 logger.warning("could not generate interpolation for"
                                f"resolution {resolution}")
-                pass
             else:
                 connection.sql(
                     sql
@@ -229,7 +224,7 @@ class AbstractLoader(ABC):
         sql = ""
         if exists:
             if mode == "create":
-                raise BgsException(
+                raise ValueError(
                     f"table {table_name} already exists."
                     f"cannot insert into table in 'create' mode")
             elif mode == "insert":

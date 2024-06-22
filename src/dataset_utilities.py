@@ -7,12 +7,9 @@
 # Created: 2024-05-22 by davis.broda@brodagroupsoftware.com
 import re
 
-from geoserver.bgsexception import InvalidArgumentException
-
-
 def get_point_res_col(resolution: int) -> str:
     if resolution > 15 or resolution < 0:
-        raise InvalidArgumentException(
+        raise ValueError(
             f"resolution must be between 0 and 15. resolution was: {resolution}"
         )
 

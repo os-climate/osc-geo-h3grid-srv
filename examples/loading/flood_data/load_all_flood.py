@@ -7,6 +7,7 @@
 # Created: 2024-05-13 by davis.broda@brodagroupsoftware.com
 import os
 import string
+import logging
 
 import geopandas
 import numpy
@@ -15,11 +16,24 @@ import rasterio
 import xarray
 from geopandas import GeoDataFrame
 
-from geoserver.bgsexception import BgsAlreadyExistsException
-from geoserver.geomesh import Geomesh
-from geoserver.loader import LoaderFactory
-from geoserver.metadata import MetadataDB
-from geoserver.visualizer import HexGridVisualizer
+# Add the source to sys.path (this is a short-term fix)
+import os
+import sys
+current_dir = os.path.abspath(os.path.dirname(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'src'))
+print(parent_dir)
+sys.path.append(parent_dir)
+
+from geomesh import Geomesh
+from loader.loader_factory import LoaderFactory
+from metadata import MetadataDB
+from visualizer import HexGridVisualizer
+
+# Set up logging
+LOGGING_FORMAT = "%(asctime)s - %(module)s:%(funcName)s %(levelname)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
+logger = logging.getLogger(__name__)
+
 
 temp_dir = "./tmp/load_all_flood/"
 
@@ -223,7 +237,7 @@ def process_all_tifs() -> None:
                 )
                 write_parquet(filtered, parquet_file)
             else:
-                print("skipping tiff to parquet conversion as file "
+                logger.info("Skipping tiff to parquet conversion as file "
                       f"{parquet_file} already exists")
 
             conf_file = write_loader_conf(
@@ -237,16 +251,14 @@ def process_all_tifs() -> None:
             if not os.path.exists(database_out):
                 load_and_interpolate(conf_file)
             else:
-                print(f"skipping interpolation as {database_out}"
+                logger.info(f"Skipping interpolation as {database_out}"
                       f" already exists")
             try:
                 addmeta(db_dir, ds_name, country_name, path)
             # TODO: for unclear reasons catching a more specific exception
             #  does not work
-            # except BgsAlreadyExistsException as e:
-            #     print(f"metadata for dataset {ds_name} already exists")
             except Exception as e:
-                print(f"metadata for dataset {ds_name} already exists")
+                logger.info(f"Metadata for dataset {ds_name} already exists")
 
             if not os.path.exists(vis_file):
                 if not os.path.exists(vis_dir):
@@ -262,7 +274,7 @@ def process_all_tifs() -> None:
                     max_long
                 )
             else:
-                print(f"skipping visualization as file {vis_file}"
+                logger.info(f"Skipping visualization as file {vis_file}"
                       f" already exists")
 
 
@@ -426,16 +438,19 @@ def tiff_to_geodf(tiff_file: str) -> GeoDataFrame:
         }
     )
 
-    print("df assembled")
+    logger.info("DataFrame assembled")
 
     geo = geopandas.GeoDataFrame(
         df,
         geometry=geopandas.points_from_xy(df.x, df.y),
         crs=crs_temp
     )
-    print("geo df assembled")
+    logger.info("Geo DataFrame assembled")
 
-    out = geo.to_crs(epsg=4326)
+    epsg = 4326
+    logger.info(f"GeoDataFrame conversion to CRS epsg:{epsg} (started)")
+    out = geo.to_crs(epsg=epsg)
+    logger.info(f"GeoDataFrame conversion to CRS epsg:{epsg} (complete)")
 
     return out
 

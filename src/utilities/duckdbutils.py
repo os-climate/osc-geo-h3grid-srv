@@ -9,8 +9,6 @@ from typing import Dict, Tuple, Optional
 
 import duckdb
 
-from geoserver.bgsexception import InvalidColumnTypeException
-
 # The official names, aliases not needed
 GENERAL_PURPOSE_DATA_TYPES = [
     "BIGINT",
@@ -145,7 +143,7 @@ def convert_to_cannonical_type(col_type: str) -> str:
     elif type_upper in TYPE_ALIASES.keys():
         out = TYPE_ALIASES[type_upper]
     else:
-        raise InvalidColumnTypeException(
+        raise ValueError(
             f"column type: {col_type} is not a known duckdb type")
 
     return out

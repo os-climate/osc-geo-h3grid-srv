@@ -14,8 +14,7 @@ import unittest
 import duckdb
 import h3
 
-from geoserver.bgsexception import BgsException
-from geoserver.loader import LoaderFactory
+from loader.loader_factory import LoaderFactory
 
 
 class TestCSVLoader(unittest.TestCase):
@@ -191,7 +190,7 @@ class TestCSVLoader(unittest.TestCase):
             LoaderFactory.create_loader(config_path).load()
 
         self.assertRaises(
-            BgsException,
+            ValueError,
             trycreate
         )
 
@@ -222,7 +221,7 @@ class TestCSVLoader(unittest.TestCase):
             LoaderFactory.create_loader(config_path)
 
         self.assertRaises(
-            BgsException,
+            ValueError,
             trycreate
         )
 
@@ -233,6 +232,6 @@ class TestCSVLoader(unittest.TestCase):
             LoaderFactory.create_loader(config_path)
 
         self.assertRaises(
-            BgsException,
+            ValueError,
             trycreate
         )

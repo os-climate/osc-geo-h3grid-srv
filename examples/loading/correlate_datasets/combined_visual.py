@@ -4,8 +4,16 @@ import math
 import folium
 import pandas
 
-from geoserver.geomesh import Geomesh
-from geoserver.visualizer import HexGridVisualizer, PointLocationVisualizer
+# Add the source to sys.path (this is a short-term fix)
+import os
+import sys
+current_dir = os.path.abspath(os.path.dirname(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'src'))
+print(parent_dir)
+sys.path.append(parent_dir)
+
+from geomesh import Geomesh
+from visualizer import HexGridVisualizer, PointLocationVisualizer
 
 # asset_ds_name = "spain_asset_data"
 flood_ds_name = "flood_depth_10_year_spain"
@@ -15,10 +23,10 @@ resolution = 7
 asset_correlated_path = "./tmp/final_asset_correlation_spain.parquet"
 
 
-min_lat=35.50 
-max_lat=44.31 
-min_long=-9.98 
-max_long=4.71 
+min_lat=35.50
+max_lat=44.31
+min_long=-9.98
+max_long=4.71
 
 def get_blank_map():
     lat_range = max_lat - min_lat

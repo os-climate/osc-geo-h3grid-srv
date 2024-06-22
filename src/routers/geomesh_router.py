@@ -6,18 +6,23 @@
 #
 # Created: 2024-03-27 by davis.broda@brodagroupsoftware.com
 from typing import Optional, Any, Dict, List
+import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from geoserver.bgsexception import BgsException
-from geoserver.geomesh import Geomesh, CellDataRow
+from geomesh import Geomesh, CellDataRow
 from .route_constants import API_PREFIX
-from .. import state
+import state
+
+LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+LOGGING_LEVEL = logging.INFO
+logging.basicConfig(format=LOGGING_FORMAT, level=LOGGING_LEVEL)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-ENDPOINT_PREFIX = API_PREFIX + "/geomesh"
+GEO_ENDPOINT_PREFIX = API_PREFIX + "/geomesh"
 
 
 class GeomeshLatLongRadiusArgs(BaseModel):
@@ -43,7 +48,7 @@ class GeomeshLatLongRadiusArgs(BaseModel):
     day: Optional[int] = Field(
         None, description="The day to retrieve data for")
 
-@router.post(ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
+@router.post(GEO_ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
 async def geomesh_latlong_radius_post(
         dataset: str,
         params: GeomeshLatLongRadiusArgs
@@ -54,6 +59,7 @@ async def geomesh_latlong_radius_post(
     :return: The data within specified radius
     :rtype: List[CellDataRow]
     """
+    logger.info(f"Retrieving data for lat-lon radius, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
@@ -68,8 +74,8 @@ async def geomesh_latlong_radius_post(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class GeomeshLatLongPointArgs(BaseModel):
@@ -90,7 +96,7 @@ class GeomeshLatLongPointArgs(BaseModel):
         None, description="The day to retrieve data for")
 
 
-@router.post(ENDPOINT_PREFIX + "/latlong/point/{dataset}")
+@router.post(GEO_ENDPOINT_PREFIX + "/latlong/point/{dataset}")
 async def geomesh_latlong_point_post(
         dataset: str,
         params: GeomeshLatLongPointArgs
@@ -101,6 +107,9 @@ async def geomesh_latlong_point_post(
     :return: The data for the cell that contains the point
     :rtype: Dict[str, Any]
     """
+
+    logger.info(f"Retrieving data for lat-lon point, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -114,8 +123,8 @@ async def geomesh_latlong_point_post(
             params.day
         )
         return resp
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class GeomeshCellRadiusArgs(BaseModel):
@@ -134,7 +143,7 @@ class GeomeshCellRadiusArgs(BaseModel):
         None, description="The day to retrieve data for")
 
 
-@router.post(ENDPOINT_PREFIX + "/cell/radius/{dataset}")
+@router.post(GEO_ENDPOINT_PREFIX + "/cell/radius/{dataset}")
 async def geomesh_cell_radius_post(
         dataset: str,
         params: GeomeshCellRadiusArgs
@@ -146,6 +155,9 @@ async def geomesh_cell_radius_post(
     :return: The data within specified radius
     :rtype: List[Dict[str, Any]]
     """
+
+    logger.info(f"Retrieving data for cell radius, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -157,8 +169,8 @@ async def geomesh_cell_radius_post(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class GeomeshCellPointArgs(BaseModel):
@@ -174,7 +186,7 @@ class GeomeshCellPointArgs(BaseModel):
         None, description="The day to retrieve data for")
 
 
-@router.post(ENDPOINT_PREFIX + "/cell/point/{dataset}")
+@router.post(GEO_ENDPOINT_PREFIX + "/cell/point/{dataset}")
 async def geomesh_cell_point(
         dataset: str,
         params: GeomeshCellPointArgs
@@ -185,6 +197,9 @@ async def geomesh_cell_point(
     :return: The data for specified cell
     :rtype: Dict[str, Any]
     """
+
+    logger.info(f"Retrieving data for cell point, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -195,8 +210,8 @@ async def geomesh_cell_point(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class GeomeshShapefileArgs(BaseModel):
@@ -227,11 +242,14 @@ class GeomeshShapefileArgs(BaseModel):
         None, description="The day to retrieve data for")
 
 
-@router.post(ENDPOINT_PREFIX + "/shapefile/{dataset}")
+@router.post(GEO_ENDPOINT_PREFIX + "/shapefile/{dataset}")
 async def geomesh_shapefile(
         dataset: str,
         params: GeomeshShapefileArgs
 ) -> List[CellDataRow]:
+
+    logger.info(f"Retrieving data shapefile, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -244,5 +262,5 @@ async def geomesh_shapefile(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

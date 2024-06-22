@@ -15,15 +15,10 @@ from shapely.geometry import Polygon
 
 import re
 
-import geoserver.metadata as metadata
-from geoserver import dataset_utilities
-from geoserver.bgsexception import DBDirNotExistsException,\
-    DataSetNotRegisteredException, \
-    IntervalInvalidException, InvalidArgumentException, \
-    OperationUnsupportedException
-from geoserver.visualizer import HexGridVisualizer
-from geoserver.metadata import MetadataDB
-from geoserver.shape import Shape
+import metadata
+import dataset_utilities
+import visualizer
+import shape
 
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -151,7 +146,7 @@ class Geomesh:
                     f"database directory {self.geo_out_db_dir} did not"
                     f"exist. Creating this directory now.")
                 os.makedirs(self.geo_out_db_dir)
-            self.metadb = MetadataDB(self.geo_out_db_dir)
+            self.metadb = metadata.MetadataDB(self.geo_out_db_dir)
 
 
 
@@ -192,7 +187,7 @@ class Geomesh:
         """
 
         if not self.metadb.ds_meta_exists(dataset_name):
-            raise DataSetNotRegisteredException(
+            raise ValueError(
                 f"dataset {dataset_name} not registered"
                 f" in metadata.")
 
@@ -205,9 +200,9 @@ class Geomesh:
 
         buffer = Geomesh.get_buffer(resolution)
 
-        shape = Shape(shapefile)
+        shp = shape.Shape(shapefile)
 
-        cells = list(shape.get_h3_in_shape(
+        cells = list(shp.get_h3_in_shape(
             buffer,
             resolution,
             True,
@@ -219,7 +214,7 @@ class Geomesh:
         ))
 
         if not os.path.exists(self.geo_out_db_dir):
-            raise DBDirNotExistsException(
+            raise ValueError(
                 "db dir: {self.geo_out_db_dir} does not exist")
 
         col_names: List[str] = meta["value_columns"]["key"]
@@ -252,7 +247,7 @@ class Geomesh:
         elif ds_type == "point":
             cell_column = f"cell{resolution}"
         else:
-            raise OperationUnsupportedException(
+            raise ValueError(
                 "only h3 and point dataset types are supported"
                 " for retrieving values within radius."
                 f" Provided type was: {ds_type}"
@@ -273,7 +268,7 @@ class Geomesh:
             sql = f"""
                 SELECT {cell_column}, latitude, longitude, {value_columns}
                 FROM {table_name}
-                {full_where} 
+                {full_where}
             """
 
             res = connection.execute(sql, time_params).fetchall()
@@ -334,14 +329,14 @@ class Geomesh:
         #  as for the moment I just set a default and moved on
         buffer = Geomesh.get_buffer(3)
 
-        shape = Shape(shapefile)
+        shp = shape.Shape(shapefile)
 
         if not os.path.exists(self.geo_out_db_dir):
-            raise DBDirNotExistsException(
+            raise ValueError(
                 "db dir: {self.geo_out_db_dir} does not exist")
 
         if not self.metadb.ds_meta_exists(dataset_name):
-            raise DataSetNotRegisteredException(
+            raise ValueError(
                 f"dataset {dataset_name} not registered in metadata.")
 
         out_db_path = self._get_db_path(dataset_name)
@@ -353,12 +348,12 @@ class Geomesh:
         # get maximum lat/long for a given shapefile region to get the database
         #  to filter out as many datapoints as possible before we have to
         #  perform the more expensive checks on exact inclusion
-        (min_long, min_lat, max_long, max_lat) = shape.get_max_lat_long(region)
+        (min_long, min_lat, max_long, max_lat) = shp.get_max_lat_long(region)
 
         lat_long_filter = f"""
             latitude BETWEEN {min_lat} AND {max_lat}
-            AND 
-            longitude BETWEEN {min_long} AND {max_long} 
+            AND
+            longitude BETWEEN {min_long} AND {max_long}
         """
 
         full_where = self._combine_where_clauses([time_filter, lat_long_filter])
@@ -379,7 +374,7 @@ class Geomesh:
         sql = f"""
             SELECT {cell_column}, latitude, longitude, {value_columns}
             FROM {table_name}
-            {full_where} 
+            {full_where}
         """
 
         raw_result: List[Tuple] = connection \
@@ -480,7 +475,7 @@ class Geomesh:
         ds_type = meta["dataset_type"]
 
         if ds_type != "point":
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"dataset {dataset_name} is not a point dataset. Instead it"
                 f"was {ds_type}"
             )
@@ -540,7 +535,7 @@ class Geomesh:
         ds_type = meta["dataset_type"]
 
         if ds_type != "h3":
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"dataset {dataset_name} is not an h3 dataset. Instead it"
                 f"was {ds_type}"
             )
@@ -631,7 +626,7 @@ class Geomesh:
             ))
             cell_column = ", ".join(cell_col_names)
         else:
-            raise OperationUnsupportedException(
+            raise ValueError(
                 "only h3 and point dataset types are supported"
                 " for retrieving values within radius."
                 f" Provided type was: {ds_type}"
@@ -703,7 +698,7 @@ class Geomesh:
         value_columns = ", ".join(col_names)
         ds_type = meta["dataset_type"]
         if ds_type != "h3":
-            raise OperationUnsupportedException(
+            raise ValueError(
                 "the dataset specified was not an h3 dataset. This dataset:"
                 f" {dataset_name} is of type: {ds_type}"
 
@@ -760,7 +755,7 @@ class Geomesh:
         value_columns = ", ".join(col_names)
         ds_type = meta["dataset_type"]
         if ds_type != "point":
-            raise OperationUnsupportedException(
+            raise ValueError(
                 "the dataset specified was not an h3 dataset. This dataset:"
                 f" {dataset_name} is of type: {ds_type}"
 
@@ -878,9 +873,9 @@ class Geomesh:
         logger.info(
             f"Total cells using resolution:{resolution} total_cells:{total_cells} cell_km2:{cell_km2}")
 
-        s = Shape(shapefile)
+        shp = shape.Shape(shapefile)
         buffer = Geomesh.get_buffer(resolution)
-        cells_included = s.get_h3_in_shape(
+        cells_included = shp.get_h3_in_shape(
             buffer,
             resolution,
             True,
@@ -962,7 +957,7 @@ class Geomesh:
         elif ds_type == "point":
             cell_column = dataset_utilities.get_point_res_col(resolution)
         else:
-            raise OperationUnsupportedException(
+            raise ValueError(
                 "only h3 and point dataset types are supported"
                 " for retrieving values within radius."
                 f" Provided type was: {ds_type}"
@@ -982,7 +977,7 @@ class Geomesh:
             sql = f"""
                        SELECT {cell_column}, latitude, longitude, {value_columns}
                        FROM {table_name}
-                       {full_where} 
+                       {full_where}
                    """
 
             res = connection.execute(sql, time_params).fetchall()
@@ -1088,7 +1083,7 @@ class Geomesh:
 
     ) -> Tuple[Optional[str], List[Any]]:
         if interval not in metadata.VALID_META_INTERVALS:
-            raise IntervalInvalidException(
+            raise ValueError(
                 f"recieved invalid interval: {interval}. Valid intervals"
                 f" are {metadata.VALID_META_INTERVALS}"
             )
@@ -1099,7 +1094,7 @@ class Geomesh:
         params = []
         if interval in has_year:
             if year is None:
-                raise IntervalInvalidException(
+                raise ValueError(
                     "No year was provided. Year must be provided for"
                     f" interval: {interval}"
                 )
@@ -1109,7 +1104,7 @@ class Geomesh:
 
         if interval == "monthly" or interval == "daily":
             if month is None:
-                raise IntervalInvalidException(
+                raise ValueError(
                     "No month was provided. Month must be provided for"
                     f" interval: {interval}"
                 )
@@ -1119,7 +1114,7 @@ class Geomesh:
 
         if interval == "daily":
             if day is None:
-                raise IntervalInvalidException(
+                raise ValueError(
                     "No day was provided. Day must be provided for"
                     f" interval: {interval}"
                 )
@@ -1136,21 +1131,21 @@ class Geomesh:
             resolution: Optional[int] = None
     ):
         if ds_type not in metadata.VALID_DATASET_TYPES:
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"dataset type: {ds_type} is not a valid type."
                 f" Valid types: {metadata.VALID_DATASET_TYPES}"
             )
 
         if ds_type == "h3":
             if resolution is None:
-                raise InvalidArgumentException(
+                raise ValueError(
                     "resolution parameter cannot be None for h3 dataset"
                 )
             table_name = dataset_name + f"_{resolution}"
         elif ds_type == "point":
             table_name = dataset_name
         else:
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"dataset type: {ds_type} not yet implemented"
             )
         return table_name
@@ -1307,7 +1302,7 @@ class Geomesh:
         return scale_factor
 
     def _visualize_map(self, cells: List[str], map_path: str) -> str:
-        return HexGridVisualizer.visualize_h3_cells(cells, map_path)
+        return visualizer.HexGridVisualizer.visualize_h3_cells(cells, map_path)
 
 
     def _get_db_path(self, db_name: str) -> str:
