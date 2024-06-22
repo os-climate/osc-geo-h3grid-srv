@@ -12,10 +12,8 @@ from typing import Dict, List, Any
 import duckdb
 from duckdb.duckdb import ConstraintException
 
-from geoserver.bgsexception import InvalidCharacterException,\
-    InvalidColumnTypeException, \
-    InvalidArgumentException, BgsAlreadyExistsException
-from geoserver.utilities import duckdbutils
+import utilities
+from utilities import duckdbutils
 
 METADATA_DB_NAME = "dataset_metadata"
 METADATA_TABLE_NAME = "dataset_metadata"
@@ -80,18 +78,18 @@ class MetadataDB:
         :return: The name of the dataset created
         :rtype: str
 
-        :raises BgsAlreadyExistsException:
+        :raises ValueError:
             if the dataset being created already exists
         """
 
         if dataset_name == METADATA_DB_NAME:
-            raise Exception(f"name {METADATA_DB_NAME} is reserved,"
+            raise ValueError(f"name {METADATA_DB_NAME} is reserved,"
                             f" and cannot be used as a dataset name.")
 
         for col_name in value_columns.keys():
             non_al_num = self._get_non_alphanum_chars(col_name)
             if len(non_al_num) > 0:
-                raise InvalidCharacterException(
+                raise ValueError(
                     f"column names must be alphanumeric."
                     f" column name: [{col_name}] contained"
                     f" non-alphanumeric character(s): [{non_al_num}]"
@@ -108,19 +106,19 @@ class MetadataDB:
                 col_errors.append(full_error)
 
         if len(col_errors) > 0:
-            raise InvalidColumnTypeException(
+            raise ValueError(
                 "One or more column types was found invalid:"
                 f"{col_errors}"
             )
 
         if dataset_type not in VALID_DATASET_TYPES:
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"dataset type: {dataset_type} was not valid."
                 f" Valid dataset types are: {VALID_DATASET_TYPES}"
             )
 
         if interval not in VALID_META_INTERVALS:
-            raise InvalidArgumentException(
+            raise ValueError(
                 f"interval: {interval} was not valid."
                 f" Valid intervals are: {VALID_META_INTERVALS}"
             )
@@ -166,7 +164,7 @@ class MetadataDB:
                 [dataset_name, description, val_col_map, interval, dataset_type]
             )
         except ConstraintException as e:
-            raise BgsAlreadyExistsException(
+            raise ValueError(
                 f"dataset with name {dataset_name} already exists",
                 e
             ) from e
@@ -184,10 +182,10 @@ class MetadataDB:
         if not duckdbutils.duckdb_check_table_exists(
                 connection, METADATA_TABLE_NAME
         ):
-            raise Exception(f"{METADATA_TABLE_NAME} table does not exist")
+            raise ValueError(f"{METADATA_TABLE_NAME} table does not exist")
 
         sql = f"""
-            SELECT 
+            SELECT
                 dataset_name,
                 description,
                 value_columns,
@@ -219,7 +217,7 @@ class MetadataDB:
         if not duckdbutils.duckdb_check_table_exists(
                 connection, METADATA_TABLE_NAME
         ):
-            raise Exception(
+            raise ValueError(
                 f"{METADATA_TABLE_NAME} table does not exist"
                 f" in database {out_db_path}")
 
@@ -240,10 +238,10 @@ class MetadataDB:
         if not duckdbutils.duckdb_check_table_exists(
                 connection, METADATA_TABLE_NAME
         ):
-            raise Exception(f"{METADATA_TABLE_NAME} table does not exist")
+            raise ValueError(f"{METADATA_TABLE_NAME} table does not exist")
 
         sql = f"""
-           SELECT 
+           SELECT
                 dataset_name,
                 description,
                 value_columns,
@@ -267,7 +265,7 @@ class MetadataDB:
         for c_name in col_names:
             non_al_num = self._get_non_alphanum_chars(c_name)
             if len(non_al_num) > 0:
-                raise InvalidCharacterException(
+                raise ValueError(
                     f"column names must be alphanumeric."
                     f" column name: [{c_name}] contained"
                     f" non-alphanumeric character(s): [{non_al_num}]"

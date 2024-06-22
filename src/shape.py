@@ -17,8 +17,6 @@ from shapely import Polygon, MultiPolygon, Point
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from geoserver.bgsexception import InvalidLatLongException, BgsException
-
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
@@ -442,25 +440,25 @@ class Shape:
 
         if min_longitude is not None:
             if min_longitude > 180 or min_longitude < -180:
-                raise InvalidLatLongException(
+                raise ValueError(
                     "minimum longitude must be in range [-180, 180]")
             out_geo = gdf.cx[min_longitude:, :]
 
         if max_longitude is not None:
             if max_longitude > 180 or max_longitude < -180:
-                raise InvalidLatLongException(
+                raise ValueError(
                     "maximum longitude must be in range [-180, 180]")
             out_geo = gdf.cx[:max_longitude, :]
 
         if min_latitude is not None:
             if min_latitude > 90 or min_latitude < -90:
-                raise InvalidLatLongException(
+                raise ValueError(
                     "minimum latitude must be in range [-90, 90]")
             out_geo = gdf.cx[:, min_latitude:]
 
         if max_latitude is not None:
             if max_latitude > 90 or max_latitude < -90:
-                raise InvalidLatLongException(
+                raise ValueError(
                     "maximum latitude must be in range [-90, 90]")
             out_geo = gdf.cx[:, :max_latitude]
 
@@ -477,7 +475,7 @@ class Shape:
         else:
             # Apply similar logic for other geometry types if needed
             print("unknown shape")
-            raise BgsException("unknown shape")
+            raise ValueError("unknown shape")
             # logger.info(f"Unknown shape:{shape}")
 
     def _get_h3_cells(

@@ -9,7 +9,7 @@ import logging
 import os.path
 from typing import List
 
-from loader import LoaderFactory
+from loader.loader_factory import LoaderFactory
 from interpolator import Interpolator
 
 # Set up logging

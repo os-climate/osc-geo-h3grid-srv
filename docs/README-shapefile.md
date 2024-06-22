@@ -54,15 +54,15 @@ all these associated files.
 ## Retrieving Shapefiles
 
 Shapefiles are files that define a geographic region. They are used in this
-example to ensure that processing only happens within a target region. 
+example to ensure that processing only happens within a target region.
 In order to run the below examples, shapefiles will need to be downloaded from
 the following link (if not already downloaded)
 
 Shapefiles source:
-- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York): 
+- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
 
 Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
-- retrieved as a dataset from the "Geographic file formats" section, 
+- retrieved as a dataset from the "Geographic file formats" section,
 "Shapefile" element, by clicking the "Whole dataset" link
 
 Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
@@ -71,7 +71,7 @@ mkdir -p ./data/shapefiles/WORLD
 ~~~
 
 Unzip the `world-administrative-boundaries.zip` file into the
-`data/shapefiles/WORLD` directory. This should result in a 
+`data/shapefiles/WORLD` directory. This should result in a
 directory structure that looks like below:
 
 ~~~
@@ -106,7 +106,7 @@ mkdir -p ./data/shapefiles/CAN
 
 Unzip the `lcd_000b21a_e.zip` file into the `./data/shapefiles/CAN`
 
-This should result in a 
+This should result in a
 directory structure that looks like below:
 
 ~~~
@@ -121,11 +121,11 @@ data
 ~~~
 
 The canada shapefile will need to be converted to wgs84 format. Use the below
-command to do so (this may take several minutes): 
+command to do so (this may take several minutes):
 
 ~~~~
 SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e.shp" ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
     --shapefile "$SHAPEFILE"
 ~~~~
 
@@ -145,7 +145,7 @@ data
         |-- lcd_000b21a_e-wgs84.prj
         |-- lcd_000b21a_e-wgs84.shp
         |-- lcd_000b21a_e-wgs84.shx
-        
+
 ~~~
 
 A shapefile for the USA is available below:
@@ -167,7 +167,7 @@ mkdir -p ./data/shapefiles/USA
 
 Unzip the `tl_2023_us_county.zip` file into the `./data/shapefiles/USA`
 
-This should result in a 
+This should result in a
 directory structure that looks like below:
 
 ~~~
@@ -181,15 +181,15 @@ data
         |-- tl_2023_us_country.shp.ea.iso.xml
         |-- tl_2023_us_country.shp.iso.xml
         |-- tl_2023_us_country.shx
-~~~  
-   
+~~~
+
 
 ## Command Line Interpreter (CLI)
 
 A CLI is available that makes it easy to interact
 with the service:
 ~~~~
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT --help
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT --help
 
 usage: cli_shapefile.py [-h] [--verbose] --host HOST --port PORT {transform,statistics,simplify,buffer,view} ...
 
@@ -220,20 +220,20 @@ the resulting files in the same location of the original
 with `-wgs84` appended to their file name:
 ~~~~
 SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e.shp" ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
     --shapefile "$SHAPEFILE"
 ~~~~
 
 
 ## Get Statistics for a Shapefile
 
-Shapefile optimization is dependent upon understanding the attributes, 
+Shapefile optimization is dependent upon understanding the attributes,
 of the shapefile.
 
 Example: World map
 ~~~~
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
     --shapefile "$SHAPEFILE"
 
 {
@@ -269,7 +269,7 @@ Example: USA map (is relatively simple, with 3371 polygons, but
 has lots of attributes):
 ~~~~
 SHAPEFILE="./data/shapefiles/USA/tl_2023_us_county.shp" ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
     --shapefile "$SHAPEFILE"
 
 {
@@ -306,7 +306,7 @@ with the bulk of the polygons actually contained in
 multi-polygons):
 ~~~~
 SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e-wgs84.shp" ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
     --shapefile "$SHAPEFILE"
 
 {
@@ -428,7 +428,7 @@ Simplify the WORLD map (notice the reduced number of vertices):
 ~~~~
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 TOLERANCE=0.1 ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
     --shapefile "$SHAPEFILE" \
     --tolerance $TOLERANCE
 
@@ -465,7 +465,7 @@ Simplify the USA map (notice the reduced number of vertices):
 ~~~~
 SHAPEFILE="./data/shapefiles/USA/tl_2023_us_county.shp" ;
 TOLERANCE=0.1 ;
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
     --shapefile "$SHAPEFILE" \
     --tolerance $TOLERANCE
 
@@ -508,7 +508,7 @@ SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e-wgs84.shp" ;
 TOLERANCE=0.01 ;
 PATH="./data/shapefiles/CAN/lcd_000b21a_e-wgs84-simplified.shp"
 
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
     --shapefile "$SHAPEFILE" \
     --tolerance $TOLERANCE \
     --path "$PATH"
@@ -620,7 +620,7 @@ DISTANCE=11100 ;
 DISTANCE_UNITS="meters"
 DISTANCE=0.1 ;
 DISTANCE_UNITS="degrees"
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT buffer \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT buffer \
     --shapefile "$SHAPEFILE" \
     --distance $DISTANCE \
     --units "$DISTANCE_UNITS"
@@ -665,7 +665,7 @@ SHAPEFILE="./data/shapefiles/USA/tl_2023_us_county.shp" ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 SHAPEFILE="./tmp/sample.shp" ;
 OUTPUT_PATH="./tmp/view.html"
-python ./src/geoserver/cli_shapefile.py $VERBOSE --host $HOST --port $PORT view \
+python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT view \
     --shapefile "$SHAPEFILE" \
     --path "$OUTPUT_PATH"
 ~~~~

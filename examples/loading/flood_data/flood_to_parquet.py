@@ -8,6 +8,7 @@
 import argparse
 from typing import Optional
 
+import logging
 import geopandas
 import numpy
 import pandas
@@ -24,12 +25,20 @@ AVAILABLE_FILTERS = [
     "Spain"
 ]
 
+# Set up logging
+LOGGING_FORMAT = "%(asctime)s - %(module)s:%(funcName)s %(levelname)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
+logger = logging.getLogger(__name__)
+
 #TODO: file is not continuous, but only contains 10, 30, 100, 300, 1000, 65535 (no data val)
 #  this is because it contains data on which areas are flooded by the 10-year
 #  flood, 30-year flood, etc.
 def load_flood_data(
         tiff_file: str
 ) -> GeoDataFrame:
+
+    logger.info(f"Loading flood data, tiff_file:{tiff_file}")
+
     with rasterio.open(tiff_file) as t_file:
         crs_temp = t_file.crs
         trans = t_file.transform
@@ -54,20 +63,25 @@ def load_flood_data(
             "value": data_array.flatten()
         }
     )
-    print("df assembled")
+    logger.info("DataFrame assembled")
 
     geo = geopandas.GeoDataFrame(
         df,
         geometry=geopandas.points_from_xy(df.x, df.y),
         crs=crs_temp
     )
-    print("geo df assembled")
+    logger.info("GeoDataFrame assembled")
 
-    out = geo.to_crs(epsg=4326)
+    epsg = 4326
+    logger.info(f"GeoDataFrame conversion to CRS epsg:{epsg} (started)")
+    out = geo.to_crs(epsg=epsg)
+    logger.info(f"GeoDataFrame conversion to CRS epsg:{epsg} (complete)")
 
     return out
 
 def fix_columns(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Fixing columns")
+
     geo['longitude'] = geo.geometry.x
     geo['latitude'] = geo.geometry.y
 
@@ -75,6 +89,7 @@ def fix_columns(geo: GeoDataFrame) -> GeoDataFrame:
     return out
 
 def filter_to_germany(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Filtering for Germay")
     # boundary box is slightly bigger than germany
     min_lat = 46
     max_lat = 56
@@ -88,6 +103,7 @@ def filter_to_germany(geo: GeoDataFrame) -> GeoDataFrame:
     return out
 
 def filter_to_rhine(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Filtering for Rhine")
     min_lat = 50.8
     max_lat = 52.2
     min_long = 5.8
@@ -101,6 +117,7 @@ def filter_to_rhine(geo: GeoDataFrame) -> GeoDataFrame:
 
 
 def filter_to_north_germany(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Filtering for North Germany")
     min_lat = 53.18
     max_lat = 54.09
     min_long = 8.74
@@ -113,6 +130,7 @@ def filter_to_north_germany(geo: GeoDataFrame) -> GeoDataFrame:
     return out
 
 def filter_france(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Filtering for France")
     min_lat = 41.28
     max_lat = 51.05
     min_long = -5.50
@@ -125,6 +143,7 @@ def filter_france(geo: GeoDataFrame) -> GeoDataFrame:
     return out
 
 def filter_belgium(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Filtering for Belgium")
     min_lat = 49.25
     max_lat = 51.55
     min_long = 2.19
@@ -137,6 +156,7 @@ def filter_belgium(geo: GeoDataFrame) -> GeoDataFrame:
     return out
 
 def filter_spain(geo: GeoDataFrame) -> GeoDataFrame:
+    logger.info("Filtering for Spain")
     min_lat = 35.50
     max_lat = 44.31
     min_long = -9.98
@@ -149,10 +169,12 @@ def filter_spain(geo: GeoDataFrame) -> GeoDataFrame:
     return out
 
 def write_to_output(geo: GeoDataFrame, out_file: str) -> None:
+    logger.info(f"Writing output file, out_file:{out_file}")
     geo.to_parquet(out_file)
 
 def get_arg_parser():
     parser = argparse.ArgumentParser(description="flood data converter")
+    logger.info(f"Parser:{parser}")
 
     parser.add_argument(
         "--raw",
@@ -180,33 +202,29 @@ def get_arg_parser():
 
 
 if __name__ == "__main__":
+    logger.info("Starting...")
     args = get_arg_parser().parse_args()
     geo = load_flood_data(args.raw)
     right_cols = fix_columns(geo)
     fil = args.filter
 
     if fil == "Germany":
-        print("filtering for germany")
         out = filter_to_germany(right_cols)
     elif fil == "NW_Germany":
-        print("filtering for NW germany")
         out = filter_to_rhine(right_cols)
     elif fil == "North_Germany":
-        print("filtering to North Germany")
         out = filter_to_north_germany(right_cols)
     elif fil == "France":
-        print("filtering for France")
         out = filter_france(right_cols)
     elif fil == "Belgium":
-        print("filtering for Belgium")
         out = filter_belgium(right_cols)
     elif fil == "Spain":
-        print("filtering for Spain")
         out = filter_spain(right_cols)
     else:
-        raise Exception(f"unrecognized filter: {fil}. must"
-                        f" select from: {AVAILABLE_FILTERS}")
+        msg = f"unrecognized filter: {fil}. must select from: {AVAILABLE_FILTERS}"
+        logger.error(msg)
+        raise Exception(msg)
 
     write_to_output(out, args.output)
 
-    print(f"Wrote {len(out)} rows to {args.output}")
+    logger.info(f"Wrote {len(out)} rows to {args.output}")

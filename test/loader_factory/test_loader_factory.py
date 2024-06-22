@@ -12,9 +12,9 @@ import time
 
 import pytest
 
-from geoserver.bgsexception import BgsException
-from geoserver.loader import LoaderFactory, CSVLoader
-from geoserver.loader.parquet_loader import ParquetLoader
+from loader.loader_factory import LoaderFactory
+from loader.csvloader import CSVLoader
+from loader.parquet_loader import ParquetLoader
 
 tmp_folder = "./test/test_data/loader_factory/tmp"
 
@@ -47,16 +47,16 @@ class TestLoaderFactory:
 
     def test_exception_on_unknown_type(self, database_dir):
         config_path = "./test/test_data/loader_factory/unknown_loader_type.yml"
-        with pytest.raises(BgsException):
+        with pytest.raises(ValueError):
             LoaderFactory.create_loader(config_path)
 
     def test_exception_on_conf_not_exist(self):
         config_path = "./test/test_data/loader_factory/not_exist_conf.yml"
-        with pytest.raises(BgsException):
+        with pytest.raises(ValueError):
             LoaderFactory.create_loader(config_path)
 
 
     def test_exception_on_db_dir_not_exist(self):
         config_path = "./test/test_data/loader_factory/no_db_dir.yml"
-        with pytest.raises(BgsException):
+        with pytest.raises(ValueError):
             LoaderFactory.create_loader(config_path)

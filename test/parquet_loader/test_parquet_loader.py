@@ -15,8 +15,7 @@ import duckdb
 import h3
 import pytest as pytest
 
-from geoserver.bgsexception import BgsException
-from geoserver.loader import LoaderFactory
+from loader.loader_factory import LoaderFactory
 
 tmp_folder = "./test/test_data/parquet_loader/tmp"
 
@@ -175,7 +174,7 @@ class TestParquetLoader:
         def trycreate():
             LoaderFactory.create_loader(config_path).load()
 
-        with pytest.raises(BgsException):
+        with pytest.raises(ValueError):
             trycreate()
 
     def test_insert_creates_if_no_existing_table(self, database_dir):

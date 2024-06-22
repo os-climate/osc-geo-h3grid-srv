@@ -9,8 +9,6 @@ import logging
 import os
 import shutil
 
-from bgsexception import BgsAlreadyExistsException, BgsNotFoundException
-
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
@@ -56,7 +54,7 @@ class Repository():
         # exist then raise an exception
         if os.path.isdir(target_directory):
             msg = f"Shapefile name:{name} already registered in the repository:{self.repository}"
-            raise BgsAlreadyExistsException(msg)
+            raise ValueError(msg)
 
         # Open the zip file in read mode and extract all
         # contents into the target directory
@@ -86,7 +84,7 @@ class Repository():
             shutil.rmtree(target_directory)
         else:
             msg = f"Shapefile name:{name} is not registered in the repository:{self.repository}"
-            raise BgsNotFoundException(msg)
+            raise ValueError(msg)
 
         output = {
             "status": "successful"

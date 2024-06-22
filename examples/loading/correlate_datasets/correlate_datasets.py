@@ -4,7 +4,15 @@ from typing import List
 import pandas
 from pandas import DataFrame
 
-from geoserver.geomesh import Geomesh, PointDataRow
+# Add the source to sys.path (this is a short-term fix)
+import os
+import sys
+current_dir = os.path.abspath(os.path.dirname(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'src'))
+print(parent_dir)
+sys.path.append(parent_dir)
+
+from geomesh import Geomesh, PointDataRow
 
 
 def load_dataset(

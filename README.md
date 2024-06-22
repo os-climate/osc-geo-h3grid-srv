@@ -19,8 +19,8 @@ with key contributions by:
 ## The Geospatial Grid
 
 The h3 geospatial indexing system is an indexing system created
-by Uber to represent the entire globe. It consists of a series of 
-hexagonal grids that cover the world at different resolution levels.  
+by Uber to represent the entire globe. It consists of a series of
+hexagonal grids that cover the world at different resolution levels.
 
 For more information see the [h3 website](https://h3geo.org/), or
 [uber's h3 introduction blog](https://www.uber.com/en-CA/blog/h3/)
@@ -60,7 +60,7 @@ pip install -r requirements.txt
 ## Getting started
 
 For a brief overview of how to get started with this application, see
-the [Getting Started Guide](/docs/getting-started.md). 
+the [Getting Started Guide](/docs/getting-started.md).
 
 
 ## About the CLIs
@@ -78,15 +78,17 @@ this functionality:
 
 ## Running tests
 
+(You may need to install pytest)
+
 ```
-python -m unittest discover ./test
+pytest ./test
 ```
 
 ## Branch Naming Guidelines
 
 Each branch should have an associated github issue. Branches should be named as follows:
-`<branch-type>/issue-<issue number>-<short description>`. Where the branch type is one of: 
-[feature, bugfix, hotfix], the issue number is the number of the associated issue, and the 
+`<branch-type>/issue-<issue number>-<short description>`. Where the branch type is one of:
+[feature, bugfix, hotfix], the issue number is the number of the associated issue, and the
 short description is a dash ('-') seperated description of the branch's purpose. This to between
 one and three words if possibble.
 

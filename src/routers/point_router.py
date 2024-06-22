@@ -6,19 +6,23 @@
 #
 # Created: 2024-03-27 by davis.broda@brodagroupsoftware.com
 from typing import Optional, List
+import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from geoserver import state
-from geoserver.bgsexception import BgsException
-from geoserver.geomesh import Geomesh, PointDataRow
-from geoserver.routers import API_PREFIX
+from geomesh import Geomesh, PointDataRow
+from .route_constants import API_PREFIX
+import state
+
+LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+LOGGING_LEVEL = logging.INFO
+logging.basicConfig(format=LOGGING_FORMAT, level=LOGGING_LEVEL)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-ENDPOINT_PREFIX = API_PREFIX + "/datasets" +  "/point"
-
+POINT_ENDPOINT_PREFIX = API_PREFIX + "/datasets" +  "/point"
 
 class PointLatLongRadiusArgs(BaseModel):
 
@@ -38,7 +42,7 @@ class PointLatLongRadiusArgs(BaseModel):
     day: Optional[int] = Field(
         None, description="The day to retrieve data for")
 
-@router.post(ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
+@router.post(POINT_ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
 async def point_latlong_radius_post(
         dataset: str,
         params: PointLatLongRadiusArgs
@@ -49,6 +53,7 @@ async def point_latlong_radius_post(
     :return: The data within specified radius
     :rtype: List[PointDataRow]
     """
+    logger.info(f"Retrieving point lat-lon radius, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
@@ -62,8 +67,8 @@ async def point_latlong_radius_post(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class PointCellRadiusArgs(BaseModel):
@@ -83,7 +88,7 @@ class PointCellRadiusArgs(BaseModel):
     """The day to retrieve data for"""
 
 
-@router.post(ENDPOINT_PREFIX + "/cell/radius/{dataset}")
+@router.post(POINT_ENDPOINT_PREFIX + "/cell/radius/{dataset}")
 async def point_cell_radius_post(
         dataset: str,
         params: PointCellRadiusArgs
@@ -95,6 +100,8 @@ async def point_cell_radius_post(
     :return: The data within specified radius
     :rtype: List[Dict[str, Any]]
     """
+    logger.info(f"Retrieving point cell radius, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -106,8 +113,8 @@ async def point_cell_radius_post(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class PointCellPointArgs(BaseModel):
@@ -124,7 +131,7 @@ class PointCellPointArgs(BaseModel):
     """The day to retrieve data for"""
 
 
-@router.post(ENDPOINT_PREFIX + "/cell/point/{dataset}")
+@router.post(POINT_ENDPOINT_PREFIX + "/cell/point/{dataset}")
 async def point_cell_point(
         dataset: str,
         params: PointCellPointArgs
@@ -135,6 +142,9 @@ async def point_cell_point(
     :return: The data for specified cell
     :rtype: Dict[str, Any]
     """
+
+    logger.info(f"Retrieving point cell, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -145,23 +155,23 @@ async def point_cell_point(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class GeomeshShapefileArgs(BaseModel):
     shapefile: str
     """
     The shapefile to use. Must be a local file on the filesystem
-    of the server. 
+    of the server.
     """
 
     region: Optional[str] = None
     """
     The region within the shapefile to use. Only data within this
     specific region will be retrieved. Intended for use in cases where
-    multiple entities are defined in one file (ex. a file containing 
-    the boundaries of every country in the world), but only a single one 
+    multiple entities are defined in one file (ex. a file containing
+    the boundaries of every country in the world), but only a single one
     should be used.
     """
 
@@ -175,11 +185,14 @@ class GeomeshShapefileArgs(BaseModel):
     """The day to retrieve data for"""
 
 
-@router.post(ENDPOINT_PREFIX + "/shapefile/{dataset}")
+@router.post(POINT_ENDPOINT_PREFIX + "/shapefile/{dataset}")
 async def geomesh_shapefile(
         dataset: str,
         params: GeomeshShapefileArgs
 ) -> List[PointDataRow]:
+
+    logger.info(f"Retrieving point shapefile, dataset:{dataset} params:{params}")
+
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
     try:
@@ -191,5 +204,5 @@ async def geomesh_shapefile(
             params.month,
             params.day
         )
-    except BgsException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

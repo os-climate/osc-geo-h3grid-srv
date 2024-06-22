@@ -12,12 +12,12 @@ from typing import List, Optional, Dict, Any, Tuple
 
 import pandas
 
-from geoserver import server, routers
-from geoserver.bgsexception import InvalidArgumentException
-from geoserver.visualizer import HexGridVisualizer, PointLocationVisualizer
-from metadata import MetadataDB
-from geoserver.utilities import httputils
 from geomesh import Geomesh
+from routers import geomesh_router
+from routers import point_router
+import visualizer
+import metadata
+from utilities import httputils
 
 
 # Set up logging
@@ -80,9 +80,9 @@ class CliExecGeospatial:
             params["day"] = day
 
         if type == "h3":
-            service = f"{routers.GEO_ENDPOINT_PREFIX}/cell/radius/{dataset}"
+            service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/cell/radius/{dataset}"
         else:
-            service = f"{routers.POINT_ENDPOINT_PREFIX}/cell/radius/{dataset}"
+            service = f"{point_router.POINT_ENDPOINT_PREFIX}/cell/radius/{dataset}"
 
         method = "POST"
         response = httputils.httprequest(
@@ -110,9 +110,9 @@ class CliExecGeospatial:
             params["day"] = day
 
         if type == "h3":
-            service = f"{routers.GEO_ENDPOINT_PREFIX}/cell/point/{dataset}"
+            service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/cell/point/{dataset}"
         else:
-            service = f"{routers.POINT_ENDPOINT_PREFIX}/cell/point/{dataset}"
+            service = f"{point_router.POINT_ENDPOINT_PREFIX}/cell/point/{dataset}"
         method = "POST"
         response = httputils.httprequest(
             self.host, self.port, service, method, obj=params)
@@ -146,9 +146,9 @@ class CliExecGeospatial:
             params["day"] = day
 
         if type == "h3":
-            service = f"{routers.GEO_ENDPOINT_PREFIX}/latlong/radius/{dataset}"
+            service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/latlong/radius/{dataset}"
         else:
-            service = f"{routers.POINT_ENDPOINT_PREFIX}/latlong/radius/{dataset}"
+            service = f"{point_router.POINT_ENDPOINT_PREFIX}/latlong/radius/{dataset}"
         logger.info(f"calling server at url {service}")
         method = "POST"
         response = httputils.httprequest(
@@ -179,7 +179,7 @@ class CliExecGeospatial:
         if day is not None:
             params["day"] = day
 
-        service = f"{routers.GEO_ENDPOINT_PREFIX}/latlong/point/{dataset}"
+        service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/latlong/point/{dataset}"
         method = "POST"
         response = httputils.httprequest(self.host, self.port, service, method,
                                          obj=params)
@@ -209,9 +209,9 @@ class CliExecGeospatial:
             params["day"] = day
 
         if type == "h3":
-            service = f"{routers.GEO_ENDPOINT_PREFIX}/shapefile/{dataset}"
+            service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/shapefile/{dataset}"
         else:
-            service = f"{routers.POINT_ENDPOINT_PREFIX}/shapefile/{dataset}"
+            service = f"{point_router.POINT_ENDPOINT_PREFIX}/shapefile/{dataset}"
         method = "POST"
 
         response = httputils.httprequest(self.host, self.port, service, method,
@@ -227,7 +227,7 @@ class CliExecGeospatial:
             interval: str,
             dataset_type: str
     ) -> str:
-        meta = MetadataDB(database_dir)
+        meta = metadata.MetadataDB(database_dir)
         return meta.add_metadata_entry(
             dataset_name,
             description,
@@ -240,7 +240,7 @@ class CliExecGeospatial:
             self,
             database_dir: str
     ) -> List[Dict[str, Any]]:
-        meta = MetadataDB(database_dir)
+        meta = metadata.MetadataDB(database_dir)
         return meta.show_meta()
 
     def filter(self, shapefile: str, resolution: int, tolerance: float) -> List:
@@ -292,7 +292,7 @@ class CliExecGeospatial:
         ds_pandas = pandas.json_normalize(ds)
 
         if visualizer_type == "HexGridVisualizer":
-            vis = HexGridVisualizer(
+            vis = visualizer.HexGridVisualizer(
                 ds_pandas,
                 value_column,
                 max_color_rgb,
@@ -305,11 +305,11 @@ class CliExecGeospatial:
 
         elif visualizer_type == "PointLocationVisualizer":
             if ds_type != "point":
-                raise InvalidArgumentException(
+                raise ValueError(
                     "PointLocationVisualizer visualizer type is not compatible"
                     f" with dataset type {ds_type}"
                 )
-            vis = PointLocationVisualizer(
+            vis = visualizer.PointLocationVisualizer(
                 ds_pandas,
                 value_column,
                 min_lat,
