@@ -42,6 +42,41 @@ ZIP file, which is a compressed copy of the files; Upon successful
 registration, these files are uncompressed for subsequent
 use
 
+
+## Prerequisites
+
+### Setting up your Environment
+
+Some environment variables are used by various code and scripts.
+Set up your environment as follows (note that "source" is used)
+~~~~
+source ./bin/environment.sh
+~~~~
+
+It is recommended that a Python virtual environment be created.
+Several convenience scripts are available to create and activate
+a virtual environment.
+
+To create a new virtual environment run the below command
+(it will create a directory called "venv" in your current working directory):
+~~~~
+$PROJECT_DIR/bin/venv.sh
+~~~~
+
+Once your virtual environment has been created, it can be activated
+as follows (note: you *must* activate the virtual environment
+for it to be used, and the command requires `source` to ensure
+environment variables to support venv are established correctly):
+~~~~
+source $PROJECT_DIR/bin/vactivate.sh
+~~~~
+
+Install the required libraries as follows:
+~~~~
+pip install -r requirements.txt
+~~~~
+
+
 ## Command Line Interpreter (CLI)
 
 A CLI is available that makes it easy to interact

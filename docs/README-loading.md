@@ -12,6 +12,39 @@ Non-interpolated datasets may be loaded as point datasets,
 skipping the interpolation step, and storing the exact location
 of input data points into the database.
 
+## Prerequisites
+
+### Setting up your Environment
+
+Some environment variables are used by various code and scripts.
+Set up your environment as follows (note that "source" is used)
+~~~~
+source ./bin/environment.sh
+~~~~
+
+It is recommended that a Python virtual environment be created.
+Several convenience scripts are available to create and activate
+a virtual environment.
+
+To create a new virtual environment run the below command
+(it will create a directory called "venv" in your current working directory):
+~~~~
+$PROJECT_DIR/bin/venv.sh
+~~~~
+
+Once your virtual environment has been created, it can be activated
+as follows (note: you *must* activate the virtual environment
+for it to be used, and the command requires `source` to ensure
+environment variables to support venv are established correctly):
+~~~~
+source $PROJECT_DIR/bin/vactivate.sh
+~~~~
+
+Install the required libraries as follows:
+~~~~
+pip install -r requirements.txt
+~~~~
+
 ## Command Line Interpreter (CLI)
 
 A CLI is available that makes it easy to interact
@@ -39,18 +72,10 @@ options:
 ## Loading a dataset
 
 To load a dataset through the command line supply the relevant configuration
-file and run the below command to load it. An example of loading a dataset with
-a configuration file is shown below. Output of a successful run of a loader will
+file and run the below command to load it. Output of a successful run of a loader will
 always be a duckdb database stored in the `<database_dir>/<dataset_name>.duckdb`
 location, where database_dir, and dataset_name are parameters specified in the
 configuration file.
-
-~~~
-CONFIG_PATH="./examples/loading/basic/h3_no_header_conf.yml" ;
-
-python ./src/cli_load.py --host $HOST --port $PORT load \
---config_path $CONFIG_PATH
-~~~
 
 Example datasets and config files are available in the `./examples/loading` directory
 
@@ -219,7 +244,7 @@ STATIONS="./data/geo_data/temperatures/station_list.txt" ;
 TEMPERATURE="./data/geo_data/temperatures/v4.mean_GISS_homogenized.txt" ;
 OUTPUT="./data/geo_data/temperatures/giss_2022_12.csv"
 
-python ./examples/loading/giss_temperature/temp_giss_to_csv.py \
+python ./examples/loading/common/temp_giss_to_csv.py \
 --stations $STATIONS \
 --temperature $TEMPERATURE \
 --output $OUTPUT
@@ -359,7 +384,7 @@ RAW="./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hi
 OUT="./tmp/flood_germany.parquet" ;
 FILTER="Germany" ;
 
-python ./examples/loading/flood_data/flood_to_parquet.py \
+python ./examples/common/flood_to_parquet.py \
 --raw $RAW \
 --output $OUT \
 --filter $FILTER
@@ -372,7 +397,7 @@ RAW="./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hi
 OUT="./tmp/flood_nw_germany.parquet" ;
 FILTER="NW_Germany" ;
 
-python ./examples/loading/flood_data/flood_to_parquet.py \
+python ./examples/common/flood_to_parquet.py \
 --raw $RAW \
 --output $OUT \
 --filter $FILTER

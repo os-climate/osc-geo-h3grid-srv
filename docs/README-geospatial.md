@@ -8,6 +8,40 @@ The geospatial components include:
 - A server that serves location data
 - a CLI that issues requests for location data
 
+## Prerequisites
+
+### Setting up your Environment
+
+Some environment variables are used by various code and scripts.
+Set up your environment as follows (note that "source" is used)
+~~~~
+source ./bin/environment.sh
+~~~~
+
+It is recommended that a Python virtual environment be created.
+Several convenience scripts are available to create and activate
+a virtual environment.
+
+To create a new virtual environment run the below command
+(it will create a directory called "venv" in your current working directory):
+~~~~
+$PROJECT_DIR/bin/venv.sh
+~~~~
+
+Once your virtual environment has been created, it can be activated
+as follows (note: you *must* activate the virtual environment
+for it to be used, and the command requires `source` to ensure
+environment variables to support venv are established correctly):
+~~~~
+source $PROJECT_DIR/bin/vactivate.sh
+~~~~
+
+Install the required libraries as follows:
+~~~~
+pip install -r requirements.txt
+~~~~
+
+
 ## Shapefiles
 
 Shapefiles are files that define a geographic region. They are used in this
@@ -42,7 +76,7 @@ data
         |-- world-adminstrative-boundaries.shx
 ~~~
 
-## Geospatial Data
+### Geospatial Data
 
 The GISS temperature dataset contains data on global temperatures,
 and is used as the raw data for the examples in this README. It is used as sample
@@ -211,6 +245,10 @@ python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
 ~~~
 
 #### Point datasets
+
+To set up the data for the below example run the "Jamaica Buildings" example
+in [README-loading.md](/docs/README-loading.md)
+
 ~~~
 DATASET="jamaica_buildings" ;
 CELL="8867328a6dfffff" ;
@@ -465,9 +503,9 @@ the `addmeta` command line command.
 #### By radius
 
 To access all temperature data within a specified radius of a point,
-access the `/api/geomesh/latlong/radius/{dataset_name}` endpoint for
+access the `/api/geomesh/latlong/radius/{dataset_name}` POST endpoint for
 continuous datasets, or the `/api/point/latlong/radius/{dataset_name}`
-endpoint for point datasets.
+POST endpoint for point datasets.
 
 Arguments required
 
@@ -481,23 +519,11 @@ Arguments required
 | month      | int   | The month to retrieve data for. must be an integer between 1 and 12. Optional Parameter. |
 | day        | int   | The day to retrieve data for. must be an integer between 1 and 31. Optional parameter.   |
 
-Example usage with curl
-
-~~~
-curl -G \
--d "latitude=50" \
--d "longitude=0" \
--d "radius=200" \
--d "RESOLUTION=3" \
--d "year=2022" \
--d "month=12" \
-$HOST:$PORT/api/geomesh/latlong/radius/giss_temperature_dec_2023
-~~~
 
 #### In a single cell
 
 To access the temperature data for whatever cell contains the
-specified point, access the `/api/geodata/giss/latlong/point` endpoint
+specified point, access the `/api/geodata/giss/latlong/point` POST endpoint
 for continuous datasets. No such endpoint exists for point datasets.
 
 Arguments required
@@ -510,26 +536,16 @@ Arguments required
 | year       | int    | The year to retrieve data for. Optional Parameter.                                       |
 | month      | int    | The month to retrieve data for. must be an integer between 1 and 12. Optional Parameter. |
 | day        | int    | The day to retrieve data for. must be an integer between 1 and 31. Optional parameter.   |
-Example usage with curl
 
-~~~
-curl -G \
--d "latitude=50" \
--d "longitude=0" \
--d "RESOLUTION=3" \
--d "year=2022" \
--d "month=12" \
-$HOST:$PORT/api/geomesh/latlong/point/giss_temperature_dec_2023
-~~~
 
 ### Get temperature by cell
 
 #### By radius
 
 To access all temperature data within a specified radius of a specified
-h3 cell access the `/api/geomesh/cell/radius/{dataset_name}` endpoint for
+h3 cell access the `/api/geomesh/cell/radius/{dataset_name}` POST endpoint for
 continuous datasets, and the `/api/point/cell/radius/{dataset_name}`
-endpoint for point datasets.
+POST endpoint for point datasets.
 
 Arguments required
 
@@ -542,25 +558,13 @@ Arguments required
 | month      | int   | The month to retrieve data for. must be an integer between 1 and 12. Optional Parameter. |
 | day        | int   | The day to retrieve data for. must be an integer between 1 and 31. Optional parameter.   |
 
-Example usage with curl
-
-~~~
-curl -G \
--d "cell=832b9bfffffffff" \
--d "radius=200" \
--d "RESOLUTION=3" \
--d "year=2022" \
--d "month=12" \
-$HOST:$PORT/api/geomesh/cell/radius/giss_temperature_dec_2022
-~~~
-
 
 #### In a single cell
 
 To access the data for a single cell in a continuous dataset,
-access the `/api/geodata/cell/point/{dataset_name}` endpoint.
+access the `/api/geodata/cell/point/{dataset_name}` POST endpoint.
 To retrieve all data that falls within the bounds of a cell in
-a point dataset, access the `/api/point/cell/point/{dataset_name}` endpoint.
+a point dataset, access the `/api/point/cell/point/{dataset_name}` POST endpoint.
 
 Arguments required
 
@@ -572,12 +576,4 @@ Arguments required
 | month      | int   | The month to retrieve data for. must be an integer between 1 and 12. Optional Parameter. |
 | day        | int   | The day to retrieve data for. must be an integer between 1 and 31. Optional parameter.   |
 
-Example usage with curl
-~~~
-curl -G \
--d "cell=832b9bfffffffff" \
--d "RESOLUTION=3" \
--d "year=2022" \
--d "month=12" \
-$HOST:$PORT/api/geomesh/cell/point/giss_temperature_dec_2022
-~~~
+

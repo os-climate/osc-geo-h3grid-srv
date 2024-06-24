@@ -33,14 +33,6 @@ Install the required libraries as follows:
 pip install -r requirements.txt
 ~~~~
 
-To run command line commands the geoserver package must first be installed
-by pip. Use the below commands to install into venv.
-
-~~~
-cd ./src
-pip install -e .
-cd ..
-~~~
 
 ### Starting server in local mode
 
@@ -185,7 +177,7 @@ STATIONS="./data/geo_data/temperatures/station_list.txt" ;
 TEMPERATURE="./data/geo_data/temperatures/v4.mean_GISS_homogenized.txt" ;
 OUTPUT="./data/geo_data/temperatures/giss_2022_12.csv"
 
-python ./examples/loading/giss_temperature/temp_giss_to_csv.py \
+python ./examples/loading/common/temp_giss_to_csv.py \
 --stations $STATIONS \
 --temperature $TEMPERATURE \
 --output $OUTPUT
@@ -212,7 +204,7 @@ not within this region.
 This takes about 1 minute to run.
 
 ```
-CONFIG_PATH="./examples/loading/giss_temperature/giss_2022_12.yml" ;
+CONFIG_PATH="./examples/getting-started/giss_2022_12.yml" ;
 
 python ./src/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH

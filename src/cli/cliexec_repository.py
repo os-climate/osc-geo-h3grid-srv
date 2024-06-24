@@ -7,7 +7,7 @@
 # Created: 2024-03-08 by davis.broda@brodagroupsoftware.com
 import logging
 
-from repository import Repository
+from shape.repository import Repository
 
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"

@@ -15,10 +15,10 @@ from shapely.geometry import Polygon
 
 import re
 
-import metadata
-import dataset_utilities
-import visualizer
-import shape
+from geoserver import metadata
+from common import dataset_utilities
+from cli import visualizer
+from shape import shape
 
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"

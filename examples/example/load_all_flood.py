@@ -5,7 +5,6 @@
 # https://opensource.org/licenses/MIT.
 #
 # Created: 2024-05-13 by davis.broda@brodagroupsoftware.com
-import os
 import string
 import logging
 
@@ -20,14 +19,14 @@ from geopandas import GeoDataFrame
 import os
 import sys
 current_dir = os.path.abspath(os.path.dirname(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'src'))
+parent_dir = os.path.abspath(os.path.join(current_dir, '../..', 'src'))
 print(parent_dir)
 sys.path.append(parent_dir)
 
-from geomesh import Geomesh
+from geoserver.geomesh import Geomesh
 from loader.loader_factory import LoaderFactory
-from metadata import MetadataDB
-from visualizer import HexGridVisualizer
+from geoserver.metadata import MetadataDB
+from cli.visualizer import HexGridVisualizer
 
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(module)s:%(funcName)s %(levelname)s - %(message)s"

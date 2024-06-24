@@ -8,11 +8,11 @@ from pandas import DataFrame
 import os
 import sys
 current_dir = os.path.abspath(os.path.dirname(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'src'))
+parent_dir = os.path.abspath(os.path.join(current_dir, '../../..', 'src'))
 print(parent_dir)
 sys.path.append(parent_dir)
 
-from geomesh import Geomesh, PointDataRow
+from geoserver.geomesh import Geomesh, PointDataRow
 
 
 def load_dataset(
