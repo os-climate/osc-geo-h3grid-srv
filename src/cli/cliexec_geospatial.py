@@ -12,12 +12,11 @@ from typing import List, Optional, Dict, Any, Tuple
 
 import pandas
 
-from geomesh import Geomesh
-from routers import geomesh_router
-from routers import point_router
+from geoserver.geomesh import Geomesh
+from geoserver import geomesh_router, metadata
+from geoserver import point_router
 import visualizer
-import metadata
-from utilities import httputils
+from common import httputils
 
 
 # Set up logging

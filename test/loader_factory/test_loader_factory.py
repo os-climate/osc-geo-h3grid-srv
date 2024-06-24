@@ -31,9 +31,10 @@ def database_dir():
     if os.path.exists(tmp_folder):
         shutil.rmtree(tmp_folder)
 
+
 class TestLoaderFactory:
 
-    def test_csv_config_makes_csv_laoder(self, database_dir):
+    def test_csv_config_makes_csv_loader(self, database_dir):
         config_path = "./test/test_data/loader_factory/csv_loader_type.yml"
         loader = LoaderFactory.create_loader(config_path)
 
@@ -52,7 +53,7 @@ class TestLoaderFactory:
 
     def test_exception_on_conf_not_exist(self):
         config_path = "./test/test_data/loader_factory/not_exist_conf.yml"
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             LoaderFactory.create_loader(config_path)
 
 

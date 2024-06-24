@@ -7,17 +7,14 @@
 # Created: 2024-03-08 by davis.broda@brodagroupsoftware.com
 import argparse
 import logging
-from typing import Optional
 
 import uvicorn as uvicorn
 import yaml
-from fastapi import FastAPI, Request, WebSocket, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI
 
-from geomesh import Geomesh
 import state
-from routers.geomesh_router import router as geomesh_router
-from routers.point_router import router as point_router
+from geoserver.geomesh_router import router as geomesh_router
+from geoserver.point_router import router as point_router
 
 # Set up logging
 LOGGING_FORMAT = \

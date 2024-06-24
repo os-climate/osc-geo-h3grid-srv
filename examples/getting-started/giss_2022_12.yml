@@ -1,0 +1,23 @@
+loader_type: CSVLoader
+dataset_name: giss_temperature_2022_12_example
+dataset_type: h3
+database_dir: ./tmp
+interval: monthly
+max_resolution: 7
+data_columns: [temperature]
+year_column: year
+month_column: month
+
+file_path: ./data/geo_data/temperatures/giss_2022_12.csv
+has_header_row: true
+columns:
+  latitude: float
+  longitude: float
+  year: int
+  month: int
+  temperature: float
+mode: create
+
+shapefile: ./data/shapefiles/WORLD/world-administrative-boundaries.shp
+region: Germany
+

@@ -11,9 +11,9 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from geomesh import Geomesh, PointDataRow
+from geoserver.geomesh import Geomesh, PointDataRow
 from .route_constants import API_PREFIX
-import state
+from . import state
 
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 LOGGING_LEVEL = logging.INFO

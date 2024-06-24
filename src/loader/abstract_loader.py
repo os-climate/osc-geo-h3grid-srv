@@ -15,8 +15,8 @@ import h3
 import pandas
 from pandas import DataFrame
 
-from utilities import duckdbutils
-import interpolator
+from common import duckdbutils
+from loader import interpolator
 
 h3_mandatory_cols = [
     "cell",

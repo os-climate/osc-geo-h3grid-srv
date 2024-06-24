@@ -36,14 +36,6 @@ Install the required libraries as follows:
 pip install -r requirements.txt
 ~~~~
 
-To run command line commands the geoserver package must first be installed
-by pip. Use the below commands to install into venv.
-
-~~~
-cd ./src
-pip install -e .
-cd ..
-~~~
 
 ### Configuring the CLI
 
@@ -194,7 +186,7 @@ RAW="./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hi
 OUT="./tmp/flood_depth_10_year_belgium.parquet" ;
 FILTER="Belgium" ;
 
-python ./examples/loading/flood_data/flood_to_parquet.py \
+python ./examples/common/flood_to_parquet.py \
 --raw $RAW \
 --output $OUT \
 --filter $FILTER
@@ -208,7 +200,7 @@ the `./tmp/flood_depth_10_year_belgium.duckdb` file as output. This command
 may take several minutes to execute.
 
 ```
-CONFIG_PATH="./examples/loading/flood_data/flood_depth_10_year_belgium.yml" ;
+CONFIG_PATH="./examples/example/flood_depth_10_year_belgium.yml" ;
 
 python ./src/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
@@ -395,7 +387,7 @@ mixture of configurations (stored in `./tmp/load_all_flood/conf`), databases
 (stored in (`./tmp/load_all_flood/visualization`))
 
 ~~~
-python ./examples/loading/flood_data/load_all_flood.py
+python ./examples/example/load_all_flood.py
 ~~~
 
 
@@ -507,7 +499,7 @@ RAW="./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hi
 OUT="./tmp/flood_depth_10_year_spain.parquet" ;
 FILTER="Spain" ;
 
-python ./examples/loading/flood_data/flood_to_parquet.py \
+python ./examples/common/flood_to_parquet.py \
 --raw $RAW \
 --output $OUT \
 --filter $FILTER
@@ -521,7 +513,7 @@ file. This will create the `./tmp/flood_depth_10_year_spain.duckdb` file
 as output.
 
 ~~~
-CONFIG_PATH="./examples/loading/correlate_datasets/flood_depth_10_year_spain.yml" ;
+CONFIG_PATH="./examples/example/correlate_datasets/flood_depth_10_year_spain.yml" ;
 
 python ./src/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
@@ -564,7 +556,7 @@ dataset. This script will also generate UUIDs for the dataset.
 RAW="./examples/loading/correlate_datasets/housing_kaggle_spain 2.json" ;
 OUT="./tmp" ;
 
-python ./examples/loading/flood_data/asset_to_parquet.py \
+python ./examples/example/correlate_datasets/asset_to_parquet.py \
 --raw "$RAW" \
 --output $OUT
 ~~~
@@ -574,7 +566,7 @@ python ./examples/loading/flood_data/asset_to_parquet.py \
 This asset data will then be loaded as a point dataset.
 
 ~~~
-CONFIG_PATH="./examples/loading/correlate_datasets/spain_asset_data.yml" ;
+CONFIG_PATH="./examples/example/correlate_datasets/spain_asset_data.yml" ;
 
 python ./src/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
@@ -626,7 +618,7 @@ SHAPEFILE=./data/shapefiles/WORLD/world-administrative-boundaries.shp ;
 REGION=Spain ;
 RESOLUTION=9 ;
 
-python ./examples/loading/correlate_datasets/correlate_datasets.py \
+python ./examples/example/correlate_datasets/correlate_datasets.py \
 --flood-dataset $FLOOD_DATASET \
 --asset-dataset $ASSET_DATASET \
 --non-anon-file "$NON_ANON_PARQUET" \

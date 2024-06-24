@@ -12,8 +12,8 @@ from typing import Dict, List, Any
 import duckdb
 from duckdb.duckdb import ConstraintException
 
-import utilities
-from utilities import duckdbutils
+import common
+from common import duckdbutils
 
 METADATA_DB_NAME = "dataset_metadata"
 METADATA_TABLE_NAME = "dataset_metadata"

@@ -8,12 +8,12 @@ import pandas
 import os
 import sys
 current_dir = os.path.abspath(os.path.dirname(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'src'))
+parent_dir = os.path.abspath(os.path.join(current_dir, '../../..', 'src'))
 print(parent_dir)
 sys.path.append(parent_dir)
 
-from geomesh import Geomesh
-from visualizer import HexGridVisualizer, PointLocationVisualizer
+from geoserver.geomesh import Geomesh
+from cli.visualizer import HexGridVisualizer, PointLocationVisualizer
 
 # asset_ds_name = "spain_asset_data"
 flood_ds_name = "flood_depth_10_year_spain"

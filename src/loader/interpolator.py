@@ -7,19 +7,17 @@
 # Created: 2024-03-08 by davis.broda@brodagroupsoftware.com
 import logging
 import os
-import time
 from typing import List, Tuple, Dict, Any, Optional
 
-import duckdb
 import h3
 import numpy as np
 import pandas
 from pandas import DataFrame
 from scipy.spatial import cKDTree
 
-import executor
-import geomesh
-import shape
+from .executor import Executor
+from geoserver import geomesh
+from shape import shape
 
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -208,7 +206,7 @@ class Interpolator:
             }
             entries.append(entry)
 
-        interpolator = executor.Executor(self._interpolate_segment_kwargs,
+        interpolator = Executor(self._interpolate_segment_kwargs,
                                          max_processes)
         items = interpolator.process_data(entries)
 
