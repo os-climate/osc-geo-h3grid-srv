@@ -50,7 +50,7 @@ pip install -r requirements.txt
 A CLI is available that makes it easy to interact
 with the service:
 ~~~~
-python ./src/cli_load.py $VERBOSE --host $HOST --port $PORT --help
+python ./src/cli/cli_load.py $VERBOSE --host $HOST --port $PORT --help
 
 usage: cli_load.py [-h] [--verbose] --host HOST --port PORT {load,initialize} ...
 
@@ -138,7 +138,7 @@ loaded dataset.
 ```
 CONFIG_PATH="./examples/loading/basic/h3_no_header_conf.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -151,7 +151,7 @@ loaded dataset.
 ```
 CONFIG_PATH="./examples/loading/basic/point_no_header_conf.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -164,7 +164,7 @@ loaded dataset.
 ```
 CONFIG_PATH="./examples/loading/jamaica_buildings/jamaica_building_conf.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -258,7 +258,7 @@ file, which contains the output of this example.
 ```
 CONFIG_PATH="./examples/loading/giss_temperature/giss_2022_12.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -412,7 +412,7 @@ Germany, up to resolution 7.
 ```
 CONFIG_PATH="./examples/loading/flood_data/flood_data.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -423,7 +423,7 @@ northwestern Germany, up to resolution 9.
 ```
 CONFIG_PATH="./examples/loading/flood_data/flood_data_nw_germany.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -435,6 +435,104 @@ it loads the data as a collection of points, without interpolating.
 ```
 CONFIG_PATH="./examples/loading/flood_data/flood_data_point.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
+--config_path $CONFIG_PATH
+```
+
+
+
+## Loading Pipeline
+
+In addition to the simpler loaders mentioned above there is also
+a loading pipeline available that allows multiple operations to be 
+chained together, for more precise control of what exactly is present
+in the dataset. 
+
+### Types of Steps
+
+| Type                | Description                                                                                                                                                                                                                                    |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Reading Step        | A reading step loads the initial source data into the pipeline as a DataFrame, allowing further processing.<br> Only a single reading step is allowed.                                                                                         |
+| Preprocessing Step  | A preprocessing step is a step that will be performed on each individual data point before aggregation is performed.<br/>If multiple preprocessing steps are present, they are processed in the order they are mentioned in the configuration. |
+| Aggregation Step    | During the processing of aggregation steps, data points will be grouped basedo n what H3 cell they are located in. Each aggregation step will be run on this grouped data, generating a single output per cell                                 |
+| Postprocessing Step | A postprocessing step will run after the aggregation. If multiple postprocessing steps are present, they are processed in the order they are mentioned in the configuration.                                                                   |
+| Output Step         | An output step will take the dataset created by the epreceeding steps and put it into a specified output location for storage                                                                                                                  |                                                                                                                                                                             
+
+
+### Configuration File
+
+| Parameter              | Type                | Mandatory | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+|------------------------|---------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| reading_step           | str                 | True      | The module and class name of the class that will contains the reading step to be executed. <br/>Specified class must extend the `loading.reading_step.ReadingStep` abstract class                                                                                                                                                                                                                                                                                                                                                  |
+| reading_step_params    | Dict[str,Any]       | True      | A dictionary of named parameters that will be passed to the constructor of the class mentioned in the reading_step parameter                                                                                                                                                                                                                                                                                                                                                                                                       |
+| preprocessing_steps    | List[Dict[str,Any]] | False     | A list of preprocessing steps to run in this pipeline. <br/>Each entry in the list must contain the "class_name" key, with a corresponding `str` value which is the module and class name of the class of the preprocessing step to run. <br/>This class must extend the `loading.preprocessing_step.PreprocessingStep` abstract class.<br/> All other entries in the dictionary will be passed to the constructor of this class as an argument.                                                                                   |
+| aggregation_steps      | List[Dict[str,Any]] | False     | A list of aggregation steps to run in this pipeline. <br/>Each entry in the list must contain the "class_name" key, with a corresponding `str` value which is the module and class name of the class of the preprocessing step to run. <br/>This class must extend the `loading.aggregation_step.AggregationStep` abstract class.<br/> All other entries in the dictionary will be passed to the constructor of this class as an argument.<br/>If any aggregation steps are present, the `aggregation_resolution` step must be set |
+| postprocessing_step    | List[Dict[str,Any]] | False     | A list of postprocessing steps to run in this pipeline. <br/>Each entry in the list must contain the "class_name" key, with a corresponding `str` value which is the module and class name of the class of the preprocessing step to run. <br/>This class must extend the `loading.postprocessing_step.PostprocessingStep` abstract class.<br/> All other entries in the dictionary will be passed to the constructor of this class as an argument.                                                                                |
+| output_step            | str                 | True      | The module and class name of the class that contains the output step to be executed.<br/> Specified class must extend the `loading.output_step.OutputStep` abstract class                                                                                                                                                                                                                                                                                                                                                          |
+| output_step_params     | Dict[str,Any]       | True      | A dictionary of named parameters that will be passed to the constructor of the class mentioned in the output_step parameter                                                                                                                                                                                                                                                                                                                                                                                                        |
+| aggregation_resolution | int                 | False     | The h3 resolution level at which data will be aggregated.<br/>Mandatory if any aggregation steps are present. Ignored if no aggregation steps are present.                                                                                                                                                                                                                                                                                                                                                                         |
+
+### Examples
+
+#### Prerequisites
+##### Shapefiles
+The shapefiles mentioned here are the same as in previous examples. If you
+have already aquired them you can skip this step.
+
+Shapefiles are files that define a geographic region. They are used in this
+example to ensure that processing only happens within a target region.
+In order to run the below examples, shapefiles will need to be downloaded from
+the following link:
+
+Shapefiles source:
+- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
+
+Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
+- retrieved as a dataset from the "Geographic file formats" section,
+"Shapefile" element, by clicking the "Whole dataset" link
+
+Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
+~~~
+mkdir -p ./data/shapefiles/WORLD
+~~~
+
+Unzip the `world-administrative-boundaries.zip` file into the
+`data/shapefiles/WORLD` directory. This should result in a
+directory structure that looks like below:
+
+~~~
+data
+|-- shapefiles
+    |-- WORLD
+        |-- world-adminstrative-boundaries.prj
+        |-- world-adminstrative-boundaries.cpg
+        |-- world-adminstrative-boundaries.dbf
+        |-- world-adminstrative-boundaries.shp
+        |-- world-adminstrative-boundaries.shx
+~~~
+
+#### Minimal Pipeline
+
+This loading pipeline contains only a reading and an output step, demonstrating the
+smallest and simplest pipeline possible. It will load a dataset that consists of 
+6 data points, and put this dataset into a database with no changes. 
+
+```
+CONFIG_PATH="./examples/loading/loading_pipeline/minimal_pipeline.yml" ;
+
+python ./src/cli/cli_load.py --host $HOST --port $PORT load-pipeline \
+--config_path $CONFIG_PATH
+```
+
+#### Full Pipeline
+
+This loading example contains every available type of step. It uses the same dataset
+as the minimal pipeline, and will a) filter for points located in Cuba, 
+b) aggregate it down to a single cell, and c) multiply values by 2. 
+
+```
+CONFIG_PATH="./examples/loading/loading_pipeline/all_steps.yml" ;
+
+python ./src/cli/cli_load.py --host $HOST --port $PORT load-pipeline \
 --config_path $CONFIG_PATH
 ```
