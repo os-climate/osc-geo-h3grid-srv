@@ -8,6 +8,7 @@
 import logging
 import os.path
 
+from loader.load_pipeline import LoadingPipelineFactory
 from loader.loader_factory import LoaderFactory
 
 # Set up logging
@@ -38,3 +39,10 @@ class CliExecLoad:
         loader = LoaderFactory.create_loader(config_path)
         loader.load()
 
+
+    def load_pipeline(
+            self,
+            config_path: str
+    ):
+        load_p = LoadingPipelineFactory.create_from_conf_file(config_path)
+        load_p.run()

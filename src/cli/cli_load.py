@@ -60,11 +60,23 @@ def load(parser: argparse.ArgumentParser):
     })
 
     if not args.config_path:
-        usage(usage, "Missing database_dir parameter")
+        usage(usage, "Missing config_path parameter")
         sys.exit(1)
 
     return cliexec.load(args.config_path)
 
+def load_pipeline(parser: argparse.ArgumentParser):
+    args = parser.parse_args()
+
+    cliexec = CliExecLoad({
+        "host": args.host,
+        "port": int(args.port)
+    })
+
+    if not args.config_path:
+        usage(usage, "Missing config_path parameter")
+        sys.exit(1)
+    return cliexec.load_pipeline(args.config_path)
 
 
 def usage(parser:any, msg: str):
@@ -102,6 +114,19 @@ def add_load_parser(
         required=True
     )
 
+def add_load_pipeline_parser(
+        subparsers
+):
+    load = subparsers.add_parser(
+        "load-pipeline",
+        help="run a loading pipeline for customizable data loading"
+    )
+    load.add_argument(
+        "--config_path",
+        help="the location of the config file that controls the pipeline",
+        required=True
+    )
+
 def execute():
     """
     Main function that sets up the argparse CLI interface.
@@ -120,6 +145,7 @@ def execute():
 
     add_load_parser(subparsers)
     add_initialize_parser(subparsers)
+    add_load_pipeline_parser(subparsers)
 
     args = parser.parse_args()
     logger.info(args)
@@ -134,6 +160,8 @@ def execute():
         initialize(parser)
     elif args.command == "load":
         load(parser)
+    elif args.command == "load-pipeline":
+        load_pipeline(parser)
     else:
         usage(parser, "Command missing - please provide command")
 

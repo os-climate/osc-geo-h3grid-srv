@@ -374,6 +374,21 @@ class Shape:
                 break
         return contained
 
+    def dataframe_points_within_shape(
+            self,
+            data_geodf: GeoDataFrame,
+            region: Optional[str],
+
+    ):
+        if region is not None:
+            reduced_shape_df = self.gdf[self.gdf.name == region]
+        else:
+            reduced_shape_df = self.gdf
+        return geopandas.tools.sjoin(data_geodf, reduced_shape_df, how='inner')
+
+    def contains_region(self, region: str) -> bool:
+        return region in self.gdf['name'].values
+
     def _fix_invalid_geometries(self, gdf):
         """
         Fixes invalid geometries in a GeoDataFrame.
@@ -503,3 +518,4 @@ class Shape:
                     cells.update(overlap_cells)
 
         return cells
+
