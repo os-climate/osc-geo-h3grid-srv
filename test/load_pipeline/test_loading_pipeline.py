@@ -237,7 +237,7 @@ class TestLoadingPipeline:
 
     def test_full_pipeline(self, database_dir):
         parquet_file = data_dir + "/2_cell_agg.parquet"
-        dataset = "read_out_only"
+        dataset = "full_pipeline"
 
         read_step = ParquetFileReader({
             "file_path": parquet_file,
@@ -273,6 +273,45 @@ class TestLoadingPipeline:
         expected = {
             ('8110bffffffffff', f(0), f(10), f(0), f(100)),
             ('81defffffffffff', f(0), f(10), f(0), f(100)),
+        }
+
+        assert set(out) == expected
+
+    def test_additional_key_cols(self, database_dir):
+        parquet_file = data_dir + "with_company.parquet"
+        dataset = "read_out_only"
+
+        read_step = ParquetFileReader({
+            "file_path": parquet_file,
+            "data_columns": ["value1", "value2"],
+            "key_columns": ["company"]
+        })
+
+        output_step = LocalDuckdbOutputStep({
+            "database_dir": database_dir,
+            "dataset_name": dataset,
+            "mode": "create"
+        })
+
+        agg_steps = [
+            MinAggregation({}),
+            MaxAggregation({})
+        ]
+
+        pipeline = LoadingPipeline(
+            read_step, [], agg_steps, [], output_step, 1
+        )
+
+        pipeline.run()
+
+        out = read_temp_db(dataset)
+
+        # the same as the raw data in the initial file
+        expected = {
+            ('company1', '8110bffffffffff', 0, 10, 0, 100),
+            ('company2', '8110bffffffffff', 2, 2, 20, 20),
+            ('company1', '81defffffffffff', 0, 10, 0, 100),
+            ('company2', '81defffffffffff', 2, 2, 20, 20)
         }
 
         assert set(out) == expected

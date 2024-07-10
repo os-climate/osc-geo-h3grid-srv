@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 from pandas import DataFrame
 
+from common import duckdbutils
 from common.const import LOGGING_FORMAT, LATITUDE_COL, LONGITUDE_COL, CELL_COL
 
 # Set up logging
@@ -50,3 +51,30 @@ class MultiplyValue(PostprocessingStep):
             out[col] = out[col] * self.conf.multiply_by
 
         return out
+
+
+@dataclass
+class AddConstantColumnConf:
+    mandatory_entries = ("column_name", "column_value")
+
+    def __init__(self, **entries):
+        for man_entry in self.mandatory_entries:
+            if man_entry not in entries:
+                raise ValueError(
+                    f"parameter '{man_entry}' was not provided."
+                    " This parameter is mandatory for AddConstantColumn")
+
+        self.__dict__.update(entries)
+
+    column_name: str
+    column_value: Any
+
+
+class AddConstantColumn(PostprocessingStep):
+    def __init__(self, conf_dict: Dict[str, Any]):
+        logger.debug(f"creating AddConstantColumnConf with conf {conf_dict}")
+        self.conf = AddConstantColumnConf(**conf_dict)
+
+    def run(self, input_df: DataFrame) -> DataFrame:
+        input_df[self.conf.column_name] = self.conf.column_value
+        return input_df

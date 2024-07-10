@@ -4,7 +4,7 @@ from loader.output_step import LocalDuckdbOutputStep
 from loader.postprocessing_step import MultiplyValue
 from loader.preprocessing_step import ShapefileFilter
 from loader.reading_step import ParquetFileReader
-from test_load_pipeline.test_loading_pipeline import AddOnePre
+from load_pipeline.test_loading_pipeline import AddOnePre
 
 data_dir = "./test/test_data/loading_pipeline/"
 

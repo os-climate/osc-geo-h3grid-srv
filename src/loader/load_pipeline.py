@@ -42,12 +42,17 @@ class LoadingPipeline:
 
     def run(self):
         data_cols = self.reading_step.get_data_cols()
+        key_cols = self.reading_step.get_key_cols()
         df = self.reading_step.read()
         for pre_step in self.preprocess_steps:
             df = pre_step.run(df)
 
         cell_agg = CellAggregationStep(
-            self.aggregation_steps, self.res, data_cols)
+            self.aggregation_steps,
+            self.res,
+            data_cols,
+            key_cols
+        )
 
         df = cell_agg.run(df)
 
@@ -83,6 +88,12 @@ class LoadingPipelineConf:
 
     aggregation_resolution: Optional[int] = None
     """The h3 resolution to group and aggregate by."""
+
+    aggregation_key_cols: Optional[List[str]] = ()
+    """
+    Any columns that should be used as group keys when aggregating
+    in addition to the cell id column that is included by default. 
+    """
 
 
 class LoadingPipelineFactory:

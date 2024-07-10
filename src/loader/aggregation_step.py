@@ -41,12 +41,14 @@ class CellAggregationStep:
             self,
             agg_steps: List[AggregationStep],
             res: int,
-            data_cols: List[str]
+            data_cols: List[str],
+            key_cols: List[str]
     ):
         self.agg_steps = agg_steps
         self.res = res
         self.data_cols = data_cols
         self.agg_map = self._get_agg_mapping()
+        self.key_cols = key_cols
 
     def run(self, in_df: DataFrame) -> DataFrame:
         """
@@ -54,7 +56,9 @@ class CellAggregationStep:
 
         :param in_df:
             The input dataframe. Is required to have the
-            'latitude' and 'longitude' columns.
+            'latitude' and 'longitude' columns, as well as each
+            of the data columns and key columns mentioned in the
+            object constructor.
         :type in_df: DataFrame
         :return: The dataframe with all aggregations performed.
         :rtype: DataFrame
@@ -68,7 +72,10 @@ class CellAggregationStep:
 
         with_cell = self._add_cell_column(in_df)
 
-        groups = with_cell.groupby(self.cell_col_name)[self.data_cols]
+        group_cols = self.key_cols.copy()
+        group_cols.append(self.cell_col_name)
+
+        groups = with_cell.groupby(group_cols)[self.data_cols]
 
         with_agg = groups.agg(**self.agg_map).reset_index()
 
