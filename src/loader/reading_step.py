@@ -26,6 +26,10 @@ class ReadingStep(ABC):
     def get_data_cols(self) -> List[str]:
         pass
 
+    @abstractmethod
+    def get_key_cols(self) -> List[str]:
+        pass
+
 
 @dataclass
 class ParquetFileReaderConf:
@@ -35,9 +39,7 @@ class ParquetFileReaderConf:
     file_path: str
     data_columns: List[str]
 
-    year_column: Optional[str] = None
-    month_column: Optional[str] = None
-    day_column: Optional[str] = None
+    key_columns: List[str] = ()
 
 
 class ParquetFileReader(ReadingStep):
@@ -53,17 +55,6 @@ class ParquetFileReader(ReadingStep):
                 f"file {conf.file_path} specified in ParquetFileReader conf"
                 f" does not exist"
             )
-        if conf.month_column is not None and conf.year_column is None:
-            raise ValueError(
-                "month_column ws specified in ParquetFileReader conf"
-                " but year_column was not. year must be specified if month"
-                " is specified.")
-
-        if conf.day_column is not None and conf.month_column is None:
-            raise ValueError(
-                "day_column was specified in ParquetFileReader conf"
-                " but month_column was not. year must be specified if month"
-                " is specified.")
 
     def read(self) -> DataFrame:
         file_path = self.conf.file_path
@@ -91,15 +82,7 @@ class ParquetFileReader(ReadingStep):
         keep_cols.append(LATITUDE_COL)
         keep_cols.append(LONGITUDE_COL)
 
-        if self.conf.year_column is not None:
-            df = df.rename(columns={self.conf.year_column: YEAR_COL})
-            keep_cols.append(YEAR_COL)
-        if self.conf.month_column is not None:
-            df = df.rename(columns={self.conf.month_column: MONTH_COL})
-            keep_cols.append(MONTH_COL)
-        if self.conf.day_column is not None:
-            df = df.rename(columns={self.conf.day_column: DAY_COL})
-            keep_cols.append(DAY_COL)
+        keep_cols.extend(self.conf.key_columns)
 
         drop_cols = df.columns.difference(keep_cols)
         if len(drop_cols) > 0:
@@ -109,3 +92,6 @@ class ParquetFileReader(ReadingStep):
 
     def get_data_cols(self) -> List[str]:
         return self.conf.data_columns
+
+    def get_key_cols(self) -> List[str]:
+        return list(self.conf.key_columns)

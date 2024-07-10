@@ -57,61 +57,6 @@ class TestParquetFileReader:
         assert set(out.columns) == \
                {"latitude", "longitude", "value1", "value2"}
 
-    def test_year_kept_if_specified(self):
-        conf = self.two_value_date_mandatory_conf.copy()
-        conf['year_column'] = 'year'
-        reader = ParquetFileReader(conf)
-        out = reader.read()
-
-        assert set(out.columns) == \
-               {"latitude", "longitude", "value1", "value2",
-                "year"}
-
-    def test_year_month_kept_if_specified(self):
-        conf = self.two_value_date_mandatory_conf.copy()
-        conf['year_column'] = 'year'
-        conf['month_column'] = 'month'
-        reader = ParquetFileReader(conf)
-        out = reader.read()
-
-        assert set(out.columns) == \
-               {"latitude", "longitude", "value1", "value2",
-                "year", "month"}
-
-    def test_year_month_day_kept_if_specified(self):
-        conf = self.two_value_date_mandatory_conf.copy()
-        conf['year_column'] = 'year'
-        conf['month_column'] = 'month'
-        conf['day_column'] = 'day'
-        reader = ParquetFileReader(conf)
-        out = reader.read()
-
-        assert set(out.columns) == \
-               {"latitude", "longitude", "value1", "value2",
-                "year", "month", "day"}
-
-    def test_error_if_month_but_not_year(self):
-        conf = self.two_value_date_mandatory_conf.copy()
-        conf['month_column'] = 'month'
-
-        with pytest.raises(ValueError):
-            ParquetFileReader(conf)
-
-    def test_error_if_day_no_month(self):
-        conf = self.two_value_date_mandatory_conf.copy()
-        conf['year_column'] = 'year'
-        conf['day_column'] = 'day'
-
-        with pytest.raises(ValueError):
-            ParquetFileReader(conf)
-
-    def test_error_if_day_no_year(self):
-        conf = self.two_value_date_mandatory_conf.copy()
-        conf['day_column'] = 'day'
-
-        with pytest.raises(ValueError):
-            ParquetFileReader(conf)
-
     def test_error_on_input_file_not_exist(self):
         conf = {
             "file_path": test_dir + "file_does_not_exist.parquet",
@@ -147,3 +92,16 @@ class TestParquetFileReader:
         reader = ParquetFileReader(conf)
         with pytest.raises(ValueError):
             reader.read()
+
+    def test_key_cols_preserved(self):
+        company_conf = {
+            "file_path": test_dir + "with_company.parquet",
+            "data_columns": ["value1", "value2"],
+            "key_columns": ["company"]
+        }
+
+        reader = ParquetFileReader(company_conf)
+        out = reader.read()
+
+        assert set(out.columns) == \
+               {"latitude", "longitude", "value1", "value2", "company"}

@@ -1,7 +1,7 @@
 import pytest
 from pandas import DataFrame
 
-from loader.aggregationstep import MinAggregation, CellAggregationStep, \
+from loader.aggregation_step import MinAggregation, CellAggregationStep, \
     MaxAggregation, MeanAggregation, MedianAggregation, CountWithinBounds
 
 
@@ -14,7 +14,7 @@ def agg_df() -> DataFrame:
         [-50, -50, 20, 1000],
         [-50.1, -50.1, 10, -1000],
         [-50.2, -50.2, 12, 300],
-    ]  # USA
+    ]
     df = DataFrame(
         data,
         columns=['latitude', 'longitude', 'value1', 'value2']
@@ -27,7 +27,7 @@ class TestPremadeAggregations:
     def test_min_agg_gives_min(self, agg_df):
         # should be two cell
         agg_step = MinAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -38,7 +38,7 @@ class TestPremadeAggregations:
     def test_max_agg_gives_max(self, agg_df):
         # should be two cell
         agg_step = MaxAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -49,7 +49,7 @@ class TestPremadeAggregations:
     def test_mean_agg_gives_mean(self, agg_df):
         # should be two cell
         agg_step = MeanAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -60,7 +60,7 @@ class TestPremadeAggregations:
     def test_median_agg_gives_median(self, agg_df):
         # should be two cell
         agg_step = MedianAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -70,7 +70,7 @@ class TestPremadeAggregations:
 
     def test_with_bounds_min_only(self, agg_df):
         agg_step = CountWithinBounds({"min": 3})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -79,7 +79,7 @@ class TestPremadeAggregations:
 
     def test_with_bounds_max_only(self, agg_df):
         agg_step = CountWithinBounds({"max": 3})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -88,7 +88,7 @@ class TestPremadeAggregations:
 
     def test_with_bounds_both_min_max(self, agg_df):
         agg_step = CountWithinBounds({"max": 12, "min":1})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 

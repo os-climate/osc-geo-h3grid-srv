@@ -21,12 +21,29 @@ def agg_df() -> DataFrame:
     )
     return df
 
+@pytest.fixture()
+def agg_df_key_col() -> DataFrame:
+    data = [
+        [50, 50, 10, 100, "company1"],
+        [50.1, 50.1, 0, 0, "company1"],
+        [50.2, 50.2, 2, 20, "company2"],
+        [-50, -50, 10, 100, "company1"],
+        [-50.1, -50.1, 0, 0, "company1"],
+        [-50.2, -50.2, 2, 20, "company2"],
+    ]
+    df = DataFrame(
+        data,
+        columns=['latitude', 'longitude', 'value1', 'value2', 'company']
+    )
+    return df
+
+
 
 class TestCellAggregationStep:
 
     def test_output_name_format_one_built_in_agg(self, agg_df):
         agg_step = MinAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -35,7 +52,7 @@ class TestCellAggregationStep:
 
     def test_cell_col_in_output(self, agg_df):
         agg_step = MinAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -43,7 +60,7 @@ class TestCellAggregationStep:
 
     def test_lat_long_not_in_output(self, agg_df):
         agg_step = MinAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -57,7 +74,7 @@ class TestCellAggregationStep:
         agg_mean = MeanAggregation({})
         agg_median = MedianAggregation({})
         agg_steps = [agg_min, agg_max, agg_mean, agg_median]
-        all_agg = CellAggregationStep(agg_steps, 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep(agg_steps, 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
         all_expected_cols = {
@@ -76,7 +93,7 @@ class TestCellAggregationStep:
 
     def test_output_name_format_one_custom_agg(self, agg_df):
         agg_step = CountWithinBounds({"min": 3})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -87,7 +104,7 @@ class TestCellAggregationStep:
         agg_step_min = CountWithinBounds({"min": 3})
         agg_step_max = CountWithinBounds({"max": 5})
         agg_list = [agg_step_min, agg_step_max]
-        all_agg = CellAggregationStep(agg_list, 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep(agg_list, 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
@@ -103,13 +120,31 @@ class TestCellAggregationStep:
         agg_step_2 = MinAggregation({})
         agg_list = [agg_step, agg_step_2]
         with pytest.raises(ValueError):
-            all_agg = CellAggregationStep(agg_list, 1, ['value1', 'value2'])
+            all_agg = CellAggregationStep(agg_list, 1, ['value1', 'value2'], [])
 
     def test_aggregates_to_expected_num_cells(self, agg_df):
         agg_step = MinAggregation({})
-        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'])
+        all_agg = CellAggregationStep([agg_step], 1, ['value1', 'value2'], [])
 
         out = all_agg.run(agg_df)
 
         assert len(out) == 2
 
+    def test_output_contains_key_cols(self, agg_df_key_col):
+        agg_step = MinAggregation({})
+        all_agg = CellAggregationStep(
+            [agg_step], 1, ['value1', 'value2'], ['company'])
+
+        out = all_agg.run(agg_df_key_col)
+
+        assert "company" in out.columns
+
+    def test_output_aggregates_by_key_cols(self, agg_df_key_col):
+        agg_step = MinAggregation({})
+        all_agg = CellAggregationStep(
+            [agg_step], 1, ['value1', 'value2'], ['company'])
+
+        out = all_agg.run(agg_df_key_col)
+
+        assert "company" in out.columns
+        assert len(out) == 4
