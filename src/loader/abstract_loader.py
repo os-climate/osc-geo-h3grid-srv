@@ -18,12 +18,6 @@ from pandas import DataFrame
 from common import duckdbutils
 from loader import interpolator
 
-h3_mandatory_cols = [
-    "cell",
-    "latitude",
-    "longitude"
-]
-
 LOADING_MODES = [
     "insert",
     "create"

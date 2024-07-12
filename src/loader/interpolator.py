@@ -15,6 +15,7 @@ import pandas
 from pandas import DataFrame
 from scipy.spatial import cKDTree
 
+from common import const
 from .executor import Executor
 from geoserver import geomesh
 from shape import shape
@@ -207,7 +208,7 @@ class Interpolator:
             entries.append(entry)
 
         interpolator = Executor(self._interpolate_segment_kwargs,
-                                         max_processes)
+                                max_processes)
         items = interpolator.process_data(entries)
 
         return items
@@ -332,9 +333,9 @@ class Interpolator:
                     f" num_neighbors:v {num_neighbors * 4}")
 
             item: Dict[str, Any] = {
-                "cell": cell,
-                "latitude": cell_lat,
-                "longitude": cell_long
+                const.CELL_COL: cell,
+                const.LATITUDE_COL: cell_lat,
+                const.LONGITUDE_COL: cell_long
             }
             zipped = zip(list(data_cols.keys()), interpolated_values)
             for col_name, col_value in zipped:

@@ -16,7 +16,7 @@ from shapely.geometry import Polygon
 import re
 
 from geoserver import metadata
-from common import dataset_utilities
+from common import dataset_utilities, const
 from cli import visualizer
 from shape import shape
 
@@ -243,7 +243,7 @@ class Geomesh:
         data = []
 
         if ds_type == "h3":
-            cell_column = "cell"
+            cell_column = const.CELL_COL
         elif ds_type == "point":
             cell_column = f"cell{resolution}"
         else:
@@ -613,7 +613,7 @@ class Geomesh:
         value_columns = ", ".join(val_col_names)
 
         if ds_type == "h3":
-            cell_column = "cell"
+            cell_column = const.CELL_COL
         elif ds_type == "point":
             col_list = connection.execute(f"describe {table_name}").fetchall()
             all_col_names = list(map(
@@ -990,9 +990,9 @@ class Geomesh:
         for row in data:
             num_val_cols = len(col_names)
             out_json = {
-                "cell": row[0],
-                "latitude": row[1],
-                "longitude": row[2],
+                const.CELL_COL: row[0],
+                const.LATITUDE_COL: row[1],
+                const.LONGITUDE_COL: row[2],
             }
             for i in range(0, num_val_cols):
                 index = i + 3

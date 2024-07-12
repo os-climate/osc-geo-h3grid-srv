@@ -2,12 +2,13 @@ import gc
 import os
 import shutil
 import time
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 
 import duckdb
 import pytest
 from pandas import DataFrame
 
+from common import const
 from loader.aggregation_step import MinAggregation, MaxAggregation
 from loader.load_pipeline import LoadingPipeline
 from loader.output_step import LocalDuckdbOutputStep
@@ -17,8 +18,8 @@ from loader.reading_step import ParquetFileReader
 
 data_dir = "./test/test_data/loading_pipeline/"
 
-
 tmp_folder = f"{data_dir}/tmp"
+
 
 @pytest.fixture()
 def database_dir():
@@ -48,6 +49,19 @@ def read_temp_db(dataset_name: str) -> List[Tuple]:
 
     return out
 
+
+def read_metadata_db(dataset_name: str) -> List[Tuple]:
+    db_path = f"{tmp_folder}/dataset_metadata.duckdb"
+    table = f"dataset_metadata"
+    connection = duckdb.connect(db_path)
+
+    out = connection.execute(
+        f"select * from {table} where dataset_name = '{dataset_name}'"
+    ).fetchall()
+
+    return out
+
+
 class AddOnePre(PreprocessingStep):
 
     def __init__(self, conf_dict: Dict[str, str]):
@@ -60,10 +74,22 @@ class AddOnePre(PreprocessingStep):
             input_df[col] = input_df[col] + 1
         return input_df
 
+def round_floats(input: Set[Tuple]) -> Set[Tuple]:
+    # database seems to result in floating point errors in some tests
+    # ex. 50.1 -> 50.999956 or something
+    # this corrects by rounding to actual accuracy
+    out = set()
+    for tpl in input:
+        new_l = []
+        for v in tpl:
+            if isinstance(v, float):
+                new_l.append(round(v,1))
+            else:
+                new_l.append(v)
+        out.add(tuple(new_l))
+    return out
 
 class TestLoadingPipeline:
-
-
 
     def test_read_out_only(self, database_dir):
         parquet_file = data_dir + "/2_cell_agg.parquet"
@@ -98,7 +124,7 @@ class TestLoadingPipeline:
             (-50.2, -50.2, 2, 20),
         }
 
-        assert set(out) == expected
+        assert round_floats(set(out)) == expected
 
     def test_read_out_preprocess(self, database_dir):
         parquet_file = data_dir + "/2_cell_agg.parquet"
@@ -118,7 +144,7 @@ class TestLoadingPipeline:
         pre_step = AddOnePre({})
 
         pipeline = LoadingPipeline(
-            read_step, [pre_step], [], [], output_step,1
+            read_step, [pre_step], [], [], output_step, 1
         )
 
         pipeline.run()
@@ -135,7 +161,7 @@ class TestLoadingPipeline:
             (-50.2, -50.2, 3, 21),
         }
 
-        assert set(out) == expected
+        assert round_floats(set(out)) == expected
 
     def test_read_out_aggregate(self, database_dir):
         parquet_file = data_dir + "/2_cell_agg.parquet"
@@ -233,7 +259,7 @@ class TestLoadingPipeline:
             (-50.2, -50.2, 2 * 2, 20 * 2),
         }
 
-        assert set(out) == expected
+        assert round_floats(set(out)) == expected
 
     def test_full_pipeline(self, database_dir):
         parquet_file = data_dir + "/2_cell_agg.parquet"
@@ -258,7 +284,6 @@ class TestLoadingPipeline:
         ]
         post_step = MultiplyValue({"multiply_by": 2})
 
-
         pipeline = LoadingPipeline(
             read_step, [pre_step], agg_steps, [post_step], output_step, 1
         )
@@ -269,13 +294,14 @@ class TestLoadingPipeline:
 
         def f(i: int):
             return (i + 1) * 2
+
         # the same as the raw data in the initial file
         expected = {
             ('8110bffffffffff', f(0), f(10), f(0), f(100)),
             ('81defffffffffff', f(0), f(10), f(0), f(100)),
         }
 
-        assert set(out) == expected
+        assert round_floats(set(out)) == expected
 
     def test_additional_key_cols(self, database_dir):
         parquet_file = data_dir + "with_company.parquet"
@@ -290,7 +316,8 @@ class TestLoadingPipeline:
         output_step = LocalDuckdbOutputStep({
             "database_dir": database_dir,
             "dataset_name": dataset,
-            "mode": "create"
+            "mode": "create",
+            "key_columns": ["company"]
         })
 
         agg_steps = [
@@ -315,3 +342,39 @@ class TestLoadingPipeline:
         }
 
         assert set(out) == expected
+
+    def test_metadata_creation(self, database_dir):
+        parquet_file = data_dir + "/2_cell_agg.parquet"
+        dataset = "test_meta_creation"
+
+        read_step = ParquetFileReader({
+            "file_path": parquet_file,
+            "data_columns": ["value1", "value2"],
+        })
+
+        output_step = LocalDuckdbOutputStep({
+            "database_dir": database_dir,
+            "dataset_name": dataset,
+            "mode": "create",
+            "description": "A Test Dataset",
+            "dataset_type": "point",
+            "key_columns": ["latitude", "longitude"]
+        })
+
+        pipeline = LoadingPipeline(
+            read_step, [], [], [], output_step, 1
+        )
+
+        pipeline.run()
+
+        out = read_metadata_db(dataset)
+
+        expected = [(
+            dataset,
+            "A Test Dataset",
+            {"key": [f"latitude", "longitude"], "value": ["REAL", "REAL"]},
+            {"key": ["value1", "value2"], "value": ["INTEGER", "INTEGER"]},
+            "point"
+        )]
+
+        assert out == expected

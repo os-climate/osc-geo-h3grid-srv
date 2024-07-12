@@ -323,14 +323,14 @@ def addmeta(
 
     desc = f"Flood data for {country_name} based on file {input_file}"
     value_col = {"value": "REAL"}
-    interval = "one_time"
+    key_col = {"h3_cell": "VARCHAR"}
     ds_type = "h3"
 
     meta.add_metadata_entry(
         ds_name,
         desc,
+        key_col,
         value_col,
-        interval,
         ds_type
     )
 

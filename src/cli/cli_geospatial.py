@@ -62,13 +62,14 @@ def addmeta(parser: argparse.ArgumentParser):
     })
 
     value_cols = json.loads(args.value_columns)
+    key_cols = json.loads(args.key_columns)
 
     res = cliexec.add_meta(
         args.database_dir,
         args.dataset_name,
         args.description,
+        key_cols,
         value_cols,
-        args.interval,
         args.dataset_type
     )
 
@@ -269,9 +270,9 @@ def add_meta_parser(
         required=True
     )
     meta_parser.add_argument(
-        "--interval",
-        help="What time interval data is available for "
-             "(yearly, monthly, weekly, daily)",
+        "--key_columns",
+        help="A JSON object mapping key column name to data type. "
+             "Data type must be a valid Duckdb General Purpose data type.",
         required=True
     )
     meta_parser.add_argument(

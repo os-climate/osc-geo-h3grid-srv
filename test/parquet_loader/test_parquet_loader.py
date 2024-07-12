@@ -81,7 +81,7 @@ class TestParquetLoader:
         cell = h3.geo_to_h3(51, -102.25, 2)
 
         interp = connection.execute(
-            f"select value2 from {ds_name}_2 where cell = '{cell}'"
+            f"select value2 from {ds_name}_2 where h3_cell = '{cell}'"
         ).fetchone()[0]
 
         # at 51,-102 value is 90, at 51, -102.5 value is 80

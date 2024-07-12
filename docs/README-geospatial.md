@@ -175,7 +175,7 @@ RESOLUTION=3 ;
 RADIUS=200 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -192,7 +192,7 @@ LATITUDE=17.9736 ;
 LONGITUDE=-76.7907 ;
 RADIUS=200 ;
 TYPE=point ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -468,14 +468,14 @@ DATABASE_DIR="./tmp" ;
 DATASET_NAME="giss_temperature" ;
 DESCRIPTION="Temperature data for the entire globe" ;
 VALUE_COLUMNS="{\"temperature\":\"REAL\"}" ;
-INTERVAL="monthly" ;
+KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="h3" ;
 python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
     --value_columns $VALUE_COLUMNS \
-    --interval $INTERVAL \
+    --key_columns $KEY_COLUMNS \
     --dataset_type $DATASET_TYPE
 ~~~
 
