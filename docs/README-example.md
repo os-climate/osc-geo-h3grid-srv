@@ -219,14 +219,14 @@ DATABASE_DIR="./tmp" ;
 DATASET_NAME="flood_depth_10_year_belgium" ;
 DESCRIPTION="Flood depth in belgium during 10 year flood" ;
 VALUE_COLUMNS="{\"value\":\"REAL\"}" ;
-INTERVAL="one_time" ;
+KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="h3" ;
 python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
     --value_columns $VALUE_COLUMNS \
-    --interval $INTERVAL \
+    --key_columns $KEY_COLUMNS \
     --dataset_type $DATASET_TYPE
 ~~~
 
@@ -532,14 +532,14 @@ DATABASE_DIR="./tmp" ;
 DATASET_NAME="flood_depth_10_year_spain" ;
 DESCRIPTION="Flood depth in Spain during 10 year flood" ;
 VALUE_COLUMNS="{\"value\":\"REAL\"}" ;
-INTERVAL="one_time" ;
+KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="point" ;
 python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
     --value_columns $VALUE_COLUMNS \
-    --interval $INTERVAL \
+    --key_columns $KEY_COLUMNS \
     --dataset_type $DATASET_TYPE
 ~~~
 
@@ -586,14 +586,14 @@ DATABASE_DIR="./tmp" ;
 DATASET_NAME="spain_asset_data" ;
 DESCRIPTION="mortgage data in Spain" ;
 VALUE_COLUMNS="{\"uuid\":\"VARCHAR\"}" ;
-INTERVAL="one_time" ;
+KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="point" ;
 python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
     --value_columns $VALUE_COLUMNS \
-    --interval $INTERVAL \
+    --key_columns $KEY_COLUMNS \
     --dataset_type $DATASET_TYPE
 ~~~
 

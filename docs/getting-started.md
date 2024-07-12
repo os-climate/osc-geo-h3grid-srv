@@ -227,14 +227,14 @@ DATABASE_DIR="./tmp" ;
 DATASET_NAME="giss_temperature_2022_12_example" ;
 DESCRIPTION="GISS temperature data for December 2022 in Germany" ;
 VALUE_COLUMNS="{\"temperature\":\"REAL\"}" ;
-INTERVAL="monthly" ;
+KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="h3" ;
 python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
     --value_columns $VALUE_COLUMNS \
-    --interval $INTERVAL \
+    --key_columns $KEY_COLUMNS \
     --dataset_type $DATASET_TYPE
 ```
 

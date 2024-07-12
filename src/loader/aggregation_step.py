@@ -8,7 +8,7 @@ import h3
 import pandas
 from pandas import DataFrame
 
-from common.const import LOGGING_FORMAT
+from common.const import LOGGING_FORMAT, CELL_COL
 
 # Set up logging
 
@@ -35,7 +35,6 @@ class AggregationStep(ABC):
 
 
 class CellAggregationStep:
-    cell_col_name = "cell"
 
     def __init__(
             self,
@@ -73,7 +72,7 @@ class CellAggregationStep:
         with_cell = self._add_cell_column(in_df)
 
         group_cols = self.key_cols.copy()
-        group_cols.append(self.cell_col_name)
+        group_cols.append(CELL_COL)
 
         groups = with_cell.groupby(group_cols)[self.data_cols]
 
@@ -87,7 +86,7 @@ class CellAggregationStep:
             long = row['longitude']
             return h3.geo_to_h3(lat, long, self.res)
 
-        in_df[self.cell_col_name] = in_df.apply(to_cell, axis='columns')
+        in_df[CELL_COL] = in_df.apply(to_cell, axis='columns')
 
         return in_df
 

@@ -8,7 +8,7 @@
 
 LATITUDE_COL = "latitude"
 LONGITUDE_COL = "longitude"
-CELL_COL = "cell"
+CELL_COL = "h3_cell"
 
 YEAR_COL = "year"
 MONTH_COL = "month"

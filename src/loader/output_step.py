@@ -2,14 +2,17 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional, List
 
 import duckdb
+import pandas
 from pandas import DataFrame
+import pandas.io.sql
 
-from common import duckdbutils
+from common import duckdbutils, const
 
 from common.const import LOGGING_FORMAT
+from geoserver.metadata import MetadataDB
 
 # Set up logging
 
@@ -28,25 +31,39 @@ class OutputStep(ABC):
     def write(self, in_df: DataFrame) -> None:
         pass
 
+    @abstractmethod
+    def _create_metadata(self, df: DataFrame) -> None:
+        pass
+
 
 @dataclass
 class LocalDuckdbOutputStepConf:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
+    # parameters used to create the data storage db
     database_dir: str
     dataset_name: str
     mode: str = "create"
+    key_columns: List[str] = ()
+
+    # Metadata parameters
+    description: str = ""
+    dataset_type: str = "h3_index"
+
 
 
 class LocalDuckdbOutputStep(OutputStep):
-    def __init__(self, conf_dict: Dict[str, str]):
-        self.conf = LocalDuckdbOutputStepConf(**conf_dict)
 
-    allowed_modes = [
+    SUPPORTED_DS_TYPES = ["h3_index", "point"]
+
+    ALLOWED_MODES = [
         "create",
         "insert"
     ]
+
+    def __init__(self, conf_dict: Dict[str, str]):
+        self.conf = LocalDuckdbOutputStepConf(**conf_dict)
 
     def _vaidate_conf(self, conf: LocalDuckdbOutputStepConf):
         if conf.database_dir is None:
@@ -58,9 +75,14 @@ class LocalDuckdbOutputStep(OutputStep):
                 "dataset_name was not provided. dataset_name is a mandatory"
                 " parameter for LocalDuckdbOutputStep")
 
-        if conf.mode not in self.allowed_modes:
+        if conf.mode not in self.ALLOWED_MODES:
             raise ValueError(
                 f"mode {conf.mode} is not allowed in "
+            )
+        if conf.dataset_type not in self.SUPPORTED_DS_TYPES:
+            raise ValueError(
+                f"dataset_type {conf.dataset_type} is not a supported type."
+                f" supported types are: {self.SUPPORTED_DS_TYPES}"
             )
 
     def write(self, in_df: DataFrame) -> None:
@@ -83,10 +105,66 @@ class LocalDuckdbOutputStep(OutputStep):
                 sql = f"INSERT INTO {table_name} BY NAME" \
                       f" SELECT * FROM in_df"
         else:
-            sql = f"CREATE TABLE {table_name}" \
-                  f" as select * from in_df"
+            keys = list(self.conf.key_columns)
+            if const.CELL_COL in in_df.columns:
+                keys.append(const.CELL_COL)
+
+            sql = pandas.io.sql.get_schema(in_df, table_name, keys=keys)
+            logger.info(f"creating table {table_name}"
+                        f" in local database at {db_path}")
+            connection.sql(
+                sql
+            )
+            sql = f"INSERT INTO {table_name} BY NAME" \
+                  f" SELECT * FROM in_df"
 
         logger.info(f"writing to local database at {db_path}")
         connection.sql(
             sql
         )
+
+        self._create_metadata(in_df)
+
+
+    def _create_metadata(self, df: DataFrame) -> None:
+        meta_db = MetadataDB(self.conf.database_dir)
+
+        ds_name = self.conf.dataset_name
+        description = self.conf.description
+
+        table_name = self.conf.dataset_name
+        schema_str = pandas.io.sql.get_schema(df, table_name,)
+        all_cols = self._get_cols_from_schema_str(schema_str)
+        k_col_names = list(self.conf.key_columns)
+        if const.CELL_COL in df.columns:
+            k_col_names.append(const.CELL_COL)
+
+        key_cols = dict(
+            [(k, v) for k,v in all_cols.items() if k in k_col_names]
+        )
+
+        value_cols = dict(
+            [(k, v) for k,v in all_cols.items() if k not in k_col_names]
+        )
+
+        meta_db.add_metadata_entry(
+            ds_name,
+            description,
+            key_cols,
+            value_cols,
+            self.conf.dataset_type
+        )
+
+    def _get_cols_from_schema_str(self, schema_str: str) -> Dict[str,str]:
+        all_str_rows = schema_str.split("\n")
+        all_str_rows.pop(0)  # contains create table <name>
+        all_str_rows.pop()  # last row contains closing )
+
+        out = {}
+        for row in all_str_rows:
+            splits = row.strip().split(' ')
+            name = splits[0].replace("\"", "").strip()
+            d_type = splits[1].replace(",", "").strip()
+            out[name] = d_type
+
+        return out

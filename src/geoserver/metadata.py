@@ -18,16 +18,10 @@ from common import duckdbutils
 METADATA_DB_NAME = "dataset_metadata"
 METADATA_TABLE_NAME = "dataset_metadata"
 
-VALID_META_INTERVALS = [
-    "one_time",
-    "yearly",
-    "monthly",
-    "daily"
-]
-
 VALID_DATASET_TYPES = [
     "h3",
-    "point"
+    "point",
+    "h3_index"
 ]
 
 # Set up logging
@@ -52,8 +46,8 @@ class MetadataDB:
             self,
             dataset_name: str,
             description: str,
+            key_columns: Dict[str, str],
             value_columns: Dict[str, str],
-            interval: str,
             dataset_type: str
     ) -> str:
         """
@@ -88,11 +82,13 @@ class MetadataDB:
 
         for col_name in value_columns.keys():
             non_al_num = self._get_non_alphanum_chars(col_name)
+            non_al_num = [c for c in non_al_num if c != "_"]
             if len(non_al_num) > 0:
                 raise ValueError(
-                    f"column names must be alphanumeric."
+                    f"column names must contain only '_' and alphanumeric"
+                    f" characters."
                     f" column name: [{col_name}] contained"
-                    f" non-alphanumeric character(s): [{non_al_num}]"
+                    f" invalid character(s): {non_al_num}"
                 )
 
         col_errors = []
@@ -101,6 +97,15 @@ class MetadataDB:
             if is_valid:
                 cannonical_type = duckdbutils.convert_to_cannonical_type(v)
                 value_columns[k] = cannonical_type
+            else:
+                full_error = f"column {k} was found invalid for reason: {error}"
+                col_errors.append(full_error)
+
+        for k, v in key_columns.copy().items():
+            is_valid, error = duckdbutils.is_general_col_type(v)
+            if is_valid:
+                cannonical_type = duckdbutils.convert_to_cannonical_type(v)
+                key_columns[k] = cannonical_type
             else:
                 full_error = f"column {k} was found invalid for reason: {error}"
                 col_errors.append(full_error)
@@ -115,12 +120,6 @@ class MetadataDB:
             raise ValueError(
                 f"dataset type: {dataset_type} was not valid."
                 f" Valid dataset types are: {VALID_DATASET_TYPES}"
-            )
-
-        if interval not in VALID_META_INTERVALS:
-            raise ValueError(
-                f"interval: {interval} was not valid."
-                f" Valid intervals are: {VALID_META_INTERVALS}"
             )
 
         out_db_path = self._get_db_path(METADATA_DB_NAME)
@@ -140,8 +139,8 @@ class MetadataDB:
                 CREATE TABLE IF NOT EXISTS {METADATA_TABLE_NAME} (
                     dataset_name    VARCHAR PRIMARY KEY,
                     description     VARCHAR,
+                    key_columns     MAP(VARCHAR, VARCHAR),
                     value_columns   MAP(VARCHAR, VARCHAR),
-                    interval        VARCHAR,
                     dataset_type    VARCHAR
                 )
             """
@@ -158,10 +157,20 @@ class MetadataDB:
             "value": list(value_columns.values())
         }
 
+        key_col_map = {
+            "key": list(key_columns.keys()),
+            "value": list(key_columns.values())
+        }
+
         try:
             connection.execute(
                 insert,
-                [dataset_name, description, val_col_map, interval, dataset_type]
+                [
+                    dataset_name,
+                    description,
+                    key_col_map,
+                    val_col_map,
+                    dataset_type]
             )
         except ConstraintException as e:
             raise ValueError(
@@ -188,8 +197,8 @@ class MetadataDB:
             SELECT
                 dataset_name,
                 description,
+                key_columns,
                 value_columns,
-                interval,
                 dataset_type
             FROM {METADATA_TABLE_NAME}
         """
@@ -201,8 +210,8 @@ class MetadataDB:
             result = {
                 "dataset_name": row[0],
                 "description": row[1],
-                "value_columns": row[2],
-                "interval": row[3],
+                "key_columns": row[2],
+                "value_columns": row[3],
                 "dataset_type": row[4]
             }
             out.append(result)
@@ -244,8 +253,8 @@ class MetadataDB:
            SELECT
                 dataset_name,
                 description,
+                key_columns,
                 value_columns,
-                interval,
                 dataset_type
            FROM {METADATA_TABLE_NAME}
            WHERE dataset_name = ?
@@ -255,8 +264,8 @@ class MetadataDB:
         result = {
             "dataset_name": result_raw[0],
             "description": result_raw[1],
-            "value_columns": result_raw[2],
-            "interval": result_raw[3],
+            "key_columns": result_raw[2],
+            "value_columns": result_raw[3],
             "dataset_type": result_raw[4]
         }
 

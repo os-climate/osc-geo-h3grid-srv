@@ -14,6 +14,8 @@ import h3
 from pandas import DataFrame
 import folium
 
+from common import const
+
 # Set up logging
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
@@ -300,7 +302,7 @@ class HexGridVisualizer(AbstractVisualizer):
             multiple_value_handling: str = 'mean',  # max, mean, min
             in_map: Optional[folium.Map] = None
     ) -> folium.Map:
-        res_col = "cell"
+        res_col = const.CELL_COL
         ds = self.dataset[[res_col, self.value_col]]
         groups = ds.groupby([res_col])
 

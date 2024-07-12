@@ -79,7 +79,7 @@ class TestCSVLoader(unittest.TestCase):
         cell = h3.geo_to_h3(50.25, 50.25, 2)
 
         interp = connection.execute(
-            f"select mydata from {ds_name}_2 where cell = '{cell}'"
+            f"select mydata from {ds_name}_2 where h3_cell = '{cell}'"
         ).fetchone()[0]
 
         # at 50,50 value is 0, at 51,51 value is 1000

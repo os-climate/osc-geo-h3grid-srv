@@ -222,16 +222,16 @@ class CliExecGeospatial:
             database_dir: str,
             dataset_name: str,
             description: str,
+            key_columns: Dict[str,str],
             value_columns: Dict[str, str],
-            interval: str,
             dataset_type: str
     ) -> str:
         meta = metadata.MetadataDB(database_dir)
         return meta.add_metadata_entry(
             dataset_name,
             description,
+            key_columns,
             value_columns,
-            interval,
             dataset_type
         )
 

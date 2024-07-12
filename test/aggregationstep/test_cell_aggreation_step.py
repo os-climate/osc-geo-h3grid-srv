@@ -56,7 +56,7 @@ class TestCellAggregationStep:
 
         out = all_agg.run(agg_df)
 
-        assert "cell" in out.columns
+        assert "h3_cell" in out.columns
 
     def test_lat_long_not_in_output(self, agg_df):
         agg_step = MinAggregation({})
@@ -78,7 +78,7 @@ class TestCellAggregationStep:
 
         out = all_agg.run(agg_df)
         all_expected_cols = {
-            "cell",
+            "h3_cell",
             "value1_min",
             "value2_min",
             "value1_max",

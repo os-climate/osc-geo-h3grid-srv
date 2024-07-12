@@ -10,3 +10,5 @@ output_step_params:
   database_dir: "./tmp"
   dataset_name: "minimal_pipeline"
   mode: "create"
+  description: "a test dataset with minimal steps present"
+  dataset_type: "point"
