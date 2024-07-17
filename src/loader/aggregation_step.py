@@ -111,6 +111,7 @@ class MinAggregation(AggregationStep):
         pass
 
     def get_agg_func(self) -> Callable[[pandas.Series], Any] | str:
+        logger.info("preparing MinAggregation aggregation step")
         return 'min'
 
     def get_name_suffix(self) -> str:
@@ -136,6 +137,7 @@ class MeanAggregation(AggregationStep):
         pass
 
     def get_agg_func(self) -> Callable[[pandas.Series], Any] | str:
+        logger.info("preparing MeanAggregation aggregation step")
         return 'mean'
 
     def get_name_suffix(self) -> str:
@@ -148,6 +150,7 @@ class MedianAggregation(AggregationStep):
         pass
 
     def get_agg_func(self) -> Callable[[pandas.Series], Any] | str:
+        logger.info("preparing MedianAggregation aggregation step")
         return 'median'
 
     def get_name_suffix(self) -> str:
@@ -173,6 +176,7 @@ class CountWithinBounds(AggregationStep):
                 " and 'max' values be set, butboth were None.")
 
     def get_agg_func(self) -> Callable[[pandas.Series], Any] | str:
+        logger.info("preparing MinAggregation aggregation step")
         def within_bounds(series: pandas.Series) -> int:
             def within_bounds_single(x):
                 if self.max is not None and x > self.max:

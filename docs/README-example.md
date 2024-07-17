@@ -628,3 +628,184 @@ python ./examples/example/correlate_datasets/correlate_datasets.py \
 --region $REGION \
 --resolution $RESOLUTION
 ~~~
+
+## Bath Generating Geospatial Indices
+
+This example will take european flood data for the entirety of europe,
+for several time periods and future projection scenarios. These will
+be used to generate geospatial indices for each of these scenarios. These
+geospatial indices consist of the data aggregated by h3 cell at resolution 7,
+with the minimum, maximum, median, and mean of the data points contained
+within that cell recorded. This sort of index is intended for use cases where
+accessing or performing analysis on the full dataset takes to much time to be
+practical. In such a case the index can be used for faster (but coarser) analysis,
+or used to find areas that meet some filter condition, allowing a much smaller
+subset of the full dataset to be retrieved and processed,
+speeding up the analysis.
+
+
+### Retrieving Data & Shapefiles
+
+The shapefiles and data used below are the same as from the earlier Belgium
+example. If you have already retrieved them, you can skip this step.
+
+Shapefiles are files that define a geographic region. They are used in this
+example to ensure that processing only happens within a target region.
+In order to run the below examples, shapefiles will need to be downloaded from
+the following link (if not already downloaded from the GISS Temperature example
+in the getting-started README):
+
+Shapefiles source:
+- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
+
+Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
+- retrieved as a dataset from the "Geographic file formats" section,
+"Shapefile" element, by clicking the "Whole dataset" link
+
+Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
+~~~
+mkdir -p ./data/shapefiles/WORLD
+~~~
+
+Unzip the `world-administrative-boundaries.zip` file into the
+`data/shapefiles/WORLD` directory. This should result in a
+directory structure that looks like below:
+
+~~~
+data
+|-- shapefiles
+    |-- WORLD
+        |-- world-adminstrative-boundaries.prj
+        |-- world-adminstrative-boundaries.cpg
+        |-- world-adminstrative-boundaries.dbf
+        |-- world-adminstrative-boundaries.shp
+        |-- world-adminstrative-boundaries.shx
+~~~
+
+
+Additionally, the flood data that will be used as the
+raw data for this example will need to be retrieved. Note that this
+data is 5GB in size.
+
+It can be retrieved from the below link
+- [Pan-European data sets of river flood probability of occurrence under present and future climate_1_all.zip](https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17)
+
+Which was retrieved from this [parent site](https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122)
+
+Create the `data/geo_data/flood/europe_flood_data` directory as below:
+
+~~~
+mkdir -p ./data/geo_data/flood/europe_flood_data
+~~~
+
+Unzip the `Pan-European data sets of river flood probability of occurrence under present and future climate_1_all.zip`
+file into the `data/geo_data/flood/europe_flood_data` directory.
+This should result in a directory structure that looks like the below:
+
+~~~
+data
+|-- geo_data
+    |-- flood
+        |-- europe_flood_data
+            |-- data.zip
+            |-- readme_river_floods_v1.1.pdf
+~~~
+
+Create the `data/geo_data/flood/europe_flood_data/data` directory as below
+
+~~~
+mkdir -p ./data/geo_data/flood/europe_flood_data/data
+~~~
+
+Unzip the `data.zip` file into the `./data/geo_data/flood/europe_flood_data/data`
+directory. This should result in a file structure like below:
+
+~~~
+data
+|-- geo_data
+    |-- flood
+        |-- europe_flood_data
+            |-- data.zip
+            |-- readme_river_floods_v1.1.pdf
+            |-- data
+                |-- River_discharge_1971_2000_hist.dbf
+                |-- River_discharge_1971_2000_hist.prj
+                ...
+~~~
+
+
+### Creating output directory
+
+A directory should be created to hold the configuration files for this script.
+~~~
+mkdir -p ./tmp/tudelft_index_conf
+~~~
+
+### Generating the Configuration Files
+
+In order to load the flood data using the loading pipeline
+configuration files will need to be generated. These lay out
+the process the pipeline is to follow. An example configuration
+file is shown below.
+
+~~~
+reading_step: "loader.geotiff_reader.GeotiffReader"
+reading_step_params:
+  file_path: "./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hist_0010y.tif"
+  data_field: "flood_risk"
+
+aggregation_steps:
+  - class_name: "loader.aggregation_step.MinAggregation"
+  - class_name: "loader.aggregation_step.MaxAggregation"
+  - class_name: "loader.aggregation_step.MedianAggregation"
+  - class_name: "loader.aggregation_step.MeanAggregation"
+
+aggregation_resolution: 7
+
+postprocessing_steps:
+  - class_name: "loader.postprocessing_step.AddConstantColumn"
+    column_name: "scenario"
+    column_value: "hist"
+
+  - class_name: "loader.postprocessing_step.AddConstantColumn"
+    column_name: "risk_window"
+    column_value: "0010y"
+
+  - class_name: "loader.postprocessing_step.AddConstantColumn"
+    column_name: "date_range"
+    column_value: "1971-2000"
+
+output_step: "loader.output_step.LocalDuckdbOutputStep"
+output_step_params:
+  database_dir: "./tmp"
+  dataset_name: "tu_delft_River_flood_depth_1971_2000_hist_0010y"
+  mode: "create"
+  description: "a flood dataset from TU Delft"
+  dataset_type: "h3_index"
+~~~
+
+This configuration outlines the data loading, the aggregations, as well
+as the addition of some metadata columns that associate the scenario,
+risk window, and date range with the underlying data. This will then be
+saved to a local duckdb database in the `./tmp` directory
+
+Generate these configuration files by running the below command
+
+~~~
+python ./examples/example/generate_tudelft_confs.py
+~~~
+
+This will create the `./tmp/tudelft_index_conf` directory and will
+create conf files within this directory for the tudelft datasets.
+Examining the `generate_tudelft_confs.py` script for more
+details on how this is accomplished. For more detail on the configuration
+file format see the loading pipeline section of [Data Loading](/docs/README-loading.md)
+
+### Generating the indices
+
+The below command will generate the indices into the `./tmp` directory.
+These indices will be duckdb database files.
+
+~~~
+python ./examples/example/generate_tudelft_indices.py
+~~~
