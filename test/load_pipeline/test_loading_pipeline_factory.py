@@ -61,7 +61,7 @@ class TestLoadingPipelineFactory:
             [MultiplyValue({"multiply_by": 2})],
             LocalDuckdbOutputStep({
                 "database_dir": "./test/test_data/loading_pipeline/tmp",
-                "dataset_name": "read_out_only",
+                "dataset_name": "all_steps",
                 "mode": "create"
             }),
             res=1

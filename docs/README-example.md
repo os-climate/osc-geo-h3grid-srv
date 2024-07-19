@@ -749,8 +749,8 @@ the process the pipeline is to follow. An example configuration
 file is shown below.
 
 ~~~
-reading_step: "loader.geotiff_reader.GeotiffReader"
-reading_step_params:
+reading_step:
+  class_name: "loader.geotiff_reader.GeotiffReader"
   file_path: "./data/geo_data/flood/europe_flood_data/data/River_flood_depth_1971_2000_hist_0010y.tif"
   data_field: "flood_risk"
 
@@ -775,8 +775,8 @@ postprocessing_steps:
     column_name: "date_range"
     column_value: "1971-2000"
 
-output_step: "loader.output_step.LocalDuckdbOutputStep"
-output_step_params:
+output_step:
+  class_name: "loader.output_step.LocalDuckdbOutputStep"
   database_dir: "./tmp"
   dataset_name: "tu_delft_River_flood_depth_1971_2000_hist_0010y"
   mode: "create"
