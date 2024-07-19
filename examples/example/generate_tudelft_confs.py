@@ -93,8 +93,8 @@ data_col_name = "flood_risk"
 
 def get_reading_step(file_path: str) -> str:
     return f"""
-reading_step: "loader.geotiff_reader.GeotiffReader"
-reading_step_params:
+reading_step:
+  class_name: "loader.geotiff_reader.GeotiffReader"
   file_path: "{file_path}"
   data_field: "{data_col_name}"
 """
@@ -123,8 +123,8 @@ def get_postprocessing_steps(
 
 def get_output_step(dataset_name: str) -> str:
     return f"""
-output_step: "loader.output_step.LocalDuckdbOutputStep"
-output_step_params:
+output_step: 
+  class_name: "loader.output_step.LocalDuckdbOutputStep"
   database_dir: "./tmp"
   dataset_name: "{dataset_name}"
   mode: "create"

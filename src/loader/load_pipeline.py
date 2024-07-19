@@ -68,14 +68,10 @@ class LoadingPipelineConf:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-    reading_step: str
+    reading_step: Dict[str, Any]
     """Name of the reading step class"""
-    reading_step_params: Dict[str, Any]
-    """Parameters that will be used when constructing reading step"""
 
-    output_step: str
-
-    output_step_params: Dict[str, Any]
+    output_step: Dict[str, Any]
 
     preprocessing_steps: List[Dict[str, Any]] = ()
     """List of preprocessing step configurations"""
@@ -126,12 +122,15 @@ class LoadingPipelineFactory:
 
     @staticmethod
     def _get_read_step(conf: LoadingPipelineConf) -> ReadingStep:
-        splt = conf.reading_step.rsplit('.', 1)
+        splt = conf.reading_step[CLASS_NAME_PARAM].rsplit('.', 1)
         read_module = importlib.import_module(splt[0])
         read_class_name = splt[1]
 
+        param_dict = dict(conf.reading_step).copy()
+        del param_dict[CLASS_NAME_PARAM]
+
         read_cls = getattr(read_module, read_class_name)
-        read_instance = read_cls(conf.reading_step_params)
+        read_instance = read_cls(param_dict)
         return read_instance
 
     @staticmethod
@@ -142,7 +141,7 @@ class LoadingPipelineFactory:
             module = importlib.import_module(splt[0])
             class_name = splt[1]
 
-            param_dict = dict(pre_step)
+            param_dict = dict(pre_step).copy()
             del param_dict[CLASS_NAME_PARAM]
 
             pre_class = getattr(module, class_name)
@@ -159,7 +158,7 @@ class LoadingPipelineFactory:
             module = importlib.import_module(splt[0])
             class_name = splt[1]
 
-            param_dict = dict(agg_ste)
+            param_dict = dict(agg_ste).copy()
             del param_dict[CLASS_NAME_PARAM]
 
             agg_class = getattr(module, class_name)
@@ -176,7 +175,7 @@ class LoadingPipelineFactory:
             module = importlib.import_module(splt[0])
             class_name = splt[1]
 
-            param_dict = dict(post_step)
+            param_dict = dict(post_step).copy()
             param_dict.pop(CLASS_NAME_PARAM)
 
             post_class = getattr(module, class_name)
@@ -187,10 +186,13 @@ class LoadingPipelineFactory:
 
     @staticmethod
     def _get_output_step(conf: LoadingPipelineConf) -> OutputStep:
-        splt = conf.output_step.rsplit('.', 1)
+        splt = conf.output_step[CLASS_NAME_PARAM].rsplit('.', 1)
         module = importlib.import_module(splt[0])
         class_name = splt[1]
 
+        param_dict = dict(conf.output_step).copy()
+        del param_dict[CLASS_NAME_PARAM]
+
         out_class = getattr(module, class_name)
-        instance = out_class(conf.output_step_params)
+        instance = out_class(param_dict)
         return instance

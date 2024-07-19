@@ -1,5 +1,5 @@
-reading_step: "loader.reading_step.ParquetFileReader"
-reading_step_params:
+reading_step:
+  class_name: "loader.reading_step.ParquetFileReader"
   file_path: "./examples/loading/loading_pipeline/2_cell_agg.parquet"
   data_columns:
     - value1
@@ -18,8 +18,8 @@ postprocessing_steps:
   - class_name: "loader.postprocessing_step.MultiplyValue"
     multiply_by: 2
 
-output_step: "loader.output_step.LocalDuckdbOutputStep"
-output_step_params:
+output_step:
+  class_name: "loader.output_step.LocalDuckdbOutputStep"
   database_dir: "./tmp"
   dataset_name: "all_steps"
   mode: "create"
