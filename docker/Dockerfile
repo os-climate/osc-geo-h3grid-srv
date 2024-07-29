@@ -14,13 +14,14 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 
 # Install Python dependencies
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy the application files
 COPY ./src /app/src
-COPY ./src/setup.py /app/src/setup.py
 
-RUN pip3 install src/
+ENV PYTHONPATH="${PYTHONPATH}:/app/src"
+ENV PORT=8000
+ENV HOST="localhost"
 
 # Set the command to run the app
 CMD [ "python3", "/app/src/server.py"]
