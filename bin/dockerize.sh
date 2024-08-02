@@ -15,14 +15,22 @@ if [ -z ${ROOT_DIR+x} ] ; then
 fi
 
 POSITIONAL_ARGS=()
+
 PUBLISH="false" # default value
 
 while [[ $# -gt 0 ]]; do
   POSITIONAL_ARGS+=("$1")
   case $1 in
-    -p|--publish)
-      PUBLISH="true"
-      shift #move past arg
+    --publish)
+      # acceptable values: false, custom, dockerhub
+      shift; #move past arg
+      PUBLISH="$1";
+      case $PUBLISH in 
+        false|dockerhub|custom);;
+        *) echo "--publish must be followed by one of [false, dockerhub, custom]"
+          exit 0;;
+      esac
+      shift
       ;;
     *) # ignore other args
       shift
@@ -36,39 +44,49 @@ function showHelp {
     echo " "
     echo "Usage:"
     echo " "
-    echo "    docker.sh [-p|--publish]"
+    echo "    docker.sh [--publish registry]"
     echo " "
     echo "    --publish argument controls whether the docker image will be published to dockerhub."
-    echo "        This argument defaults to false."
+    echo "        This argument defaults to false. Must be set to one of [false, dockerhub, custom]"
     echo " "
-    echo "    The DOCKERHUB_USERNAME environment variable must exist to run this script, and "
-    echo "        should be set to the user's dockerhub username. "
+    echo "    The DOCKER_USERNAME environment variable must exist to run this script, and "
+    echo "        should be set to the user's docker username. "
     echo " "
-    echo "    The DOCKERHUB_TOKEN environment variable must exist if the publish argument is present"
-    echo "        and should be set to a dockerhub access token that will allow docker hub access"
+    echo "    The DOCKER_TOKEN environment variable must exist if the publish argument is present"
+    echo "        and should be set to a docker access token that will allow docker access"
     echo " "
 }
 
-if [[ -z "$DOCKERHUB_USERNAME" ]]; then
-    echo "environment variable DOCKERHUB_USERNAME is mandatory for this script, but was empty"
+if [[ -z "$DOCKER_USERNAME" ]]; then
+    echo "environment variable DOCKER_USERNAME is mandatory for this script, but was empty"
     exit 1
 fi
 
-if [[ -z "$DOCKERHUB_TOKEN" && "$PUBLISH" == "true" ]]; then
-    echo "environment variable DOCKERHUB_TOKEN is mandatory if publishing image, but was empty"
+if [[ -z "$DOCKER_TOKEN" && "$PUBLISH" != "false" ]]; then
+    echo "environment variable DOCKER_TOKEN is mandatory if publishing image, but was empty"
+    exit 1
+fi
+
+if [[ -z "$DOCKER_REGISTRY" && "$PUBLISH" == "custom" ]]; then
+    echo "environment variable DOCKER_REGISTRY is mandatory if publishing an image to a custom registry, but was empty"
     exit 1
 fi
 
 VERSION="0.0.1"
 WORKING_DIR="$PROJECT_DIR/tmp"
 DOCKER_IMAGE_NAME="$PROJECT"
-IMAGE_NAME="$DOCKERHUB_USERNAME/$DOCKER_IMAGE_NAME"
+IMAGE_NAME="$DOCKER_USERNAME/$DOCKER_IMAGE_NAME"
+
+if [[ "$PUBLISH" == custom ]]; then
+  IMAGE_NAME="$DOCKER_REGISTRY/$IMAGE_NAME"
+  echo "set image name to $IMAGE_NAME"
+fi
 
 # Show the environment
 echo "--- Script Environment ---"
 echo "PROJECT_DIR:                $PROJECT_DIR"
 echo "WORKING_DIR:                $WORKING_DIR"
-echo "DOCKERHUB_USERNAME:         $DOCKERHUB_USERNAME"
+echo "DOCKER_USERNAME:            $DOCKER_USERNAME"
 echo "VERSION (IMAGE):            $VERSION"
 echo "IMAGE_NAME:                 $IMAGE_NAME"
 echo " "
@@ -100,34 +118,40 @@ build() {
         --no-cache=true
 }
 
-dockerhub_login() {
-  echo "logging in to docker hub with username $DOCKERHUB_USERNAME"
-  docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_TOKEN"
+docker_login() {
+  echo "logging in to docker registry with username $DOCKER_USERNAME"
+  if [[ "$PUBLISH" == "custom" ]]; then
+    echo "logging into custom registry: $DOCKER_REGISTRY with user $DOCKER_USERNAME"
+    docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" -p "$DOCKER_TOKEN"
+  else
+    docker login -u "$DOCKER_USERNAME" -p "$DOCKER_TOKEN"
+  fi
+
   LOGIN_RETURN=$?
 
   if [[ $LOGIN_RETURN -eq 0 ]]; then
-    echo "Successfully logged into dockerhub as $DOCKERHUB_USERNAME"
+    echo "Successfully logged into docker registry as $DOCKER_USERNAME"
     return 0
   else
-    echo "Could not log into dockerhub as $DOCKERHUB_USERNAME"
+    echo "Could not log into docker registry as $DOCKER_USERNAME"
     return 1
    fi
 }
 
-dockerhub_logout() {
-  echo "logging out from dockerhub"
+docker_logout() {
+  echo "logging out from docker"
   docker logout
   LOGOUT_RETURN=$?
   if [[ $LOGOUT_RETURN -eq 0 ]]; then
-    echo "Successfully logged out of dockerhub"
+    echo "Successfully logged out of docker registry"
   else
-    echo "problem occurred logging out of dockerhub!"
+    echo "problem occurred logging out of docker registry!"
   fi
 }
 
 publish() {
-  echo "Pushing image to DockerHub"
-  docker push "$IMAGE_NAME"
+  echo "Pushing image to Docker"
+  docker push "$IMAGE_NAME:$VERSION"
   DOCKER_RETURN=$?
 
   if [[ $DOCKER_RETURN -eq 0 ]]; then
@@ -145,17 +169,17 @@ prepare;
 cleanup;
 build;
 
-if [[ "$PUBLISH" == "true" ]]; then
-  dockerhub_login;
+if [[ "$PUBLISH" != "false" ]]; then
+  docker_login;
   PUBLISH_LOGIN_SUCCESS=$?
    if [[ $PUBLISH_LOGIN_SUCCESS -eq 0 ]]; then
        publish;
   else
     echo "Not publishing due to login failure"
-    dockerhub_logout;
+    docker_logout;
     exit 1
   fi
 
-  dockerhub_logout;
+  docker_logout;
   exit 0
 fi
