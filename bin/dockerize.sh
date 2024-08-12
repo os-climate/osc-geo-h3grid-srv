@@ -32,6 +32,15 @@ while [[ $# -gt 0 ]]; do
       esac
       shift
       ;;
+    --latest)
+      LATEST="true"
+      shift
+      ;;
+    --version)
+      shift; #move past arg
+      VERSION="$1"
+      shift
+      ;;
     *) # ignore other args
       shift
       ;;
@@ -44,10 +53,11 @@ function showHelp {
     echo " "
     echo "Usage:"
     echo " "
-    echo "    docker.sh [--publish registry]"
+    echo "    docker.sh [--publish registry] [--latest] [--version ver]"
     echo " "
     echo "    --publish argument controls whether the docker image will be published to dockerhub."
     echo "        This argument defaults to false. Must be set to one of [false, dockerhub, custom]"
+    echo "        The DOCKER_REGISTRY environment variable "
     echo " "
     echo "    The DOCKER_USERNAME environment variable must exist to run this script, and "
     echo "        should be set to the user's docker username. "
@@ -159,6 +169,17 @@ publish() {
   else
     echo "Attempt to publish docker image failed!"
   fi
+
+  if [[ "$LATEST" == "true" ]]
+    echo "Pushing image to Docker as latest"
+    docker push "$IMAGE_NAME:latest"
+    DOCKER_RETURN=$?
+
+    if [[ $DOCKER_RETURN -eq 0 ]]; then
+      echo "Image successfully published as latest!"
+    else
+      echo "Attempt to publish docker image as latest failed!"
+    fi
 }
 
 echo "Changing directory to sandbox directory ($WORKING_DIR)"
