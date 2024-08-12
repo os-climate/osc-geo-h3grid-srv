@@ -64,6 +64,7 @@ class LocalDuckdbOutputStep(OutputStep):
 
     def __init__(self, conf_dict: Dict[str, str]):
         self.conf = LocalDuckdbOutputStepConf(**conf_dict)
+        self._vaidate_conf(self.conf)
 
     def _vaidate_conf(self, conf: LocalDuckdbOutputStepConf):
         if conf.database_dir is None:
