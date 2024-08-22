@@ -50,13 +50,15 @@ In order to run the below examples, shapefiles will need to be downloaded from
 the following link:
 
 Shapefiles source:
-- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
+- [world-administrative-boundaries.zip]
 
-Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
+Retrieved from parent site: 
+https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
 - retrieved as a dataset from the "Geographic file formats" section,
 "Shapefile" element, by clicking the "Whole dataset" link
 
-Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
+Create the `data/shapefiles/WORLD` directory as below 
+(if it does not already exist)
 ~~~
 mkdir -p ./data/shapefiles/WORLD
 ~~~
@@ -76,17 +78,18 @@ data
         |-- world-adminstrative-boundaries.shx
 ~~~
 
-### Geospatial Data
+## Geospatial Data
 
 The GISS temperature dataset contains data on global temperatures,
 and is used as the raw data for the examples in this README. It is used as sample
 data for some of the below examples. It can be retrieved from the below links:
 
 GISS Temperature:
-- [v4.mean_GISS_homogenized.txt](https://data.giss.nasa.gov/gistemp/station_data_v4_globe/v4.mean_GISS_homogenized.txt.gz)
-- [stations.txt](https://data.giss.nasa.gov/gistemp/station_data_v4_globe/station_list.txt)
+- [v4.mean_GISS_homogenized.txt]
+- [stations.txt]
 
-These were retrieved from this parent site: https://data.giss.nasa.gov/gistemp/station_data_v4_globe/
+These were retrieved from this parent site: 
+https://data.giss.nasa.gov/gistemp/station_data_v4_globe/
 
 Create the `data/geo_data/temperatures` directory using the
 below command (if it does not already exist):
@@ -98,8 +101,8 @@ mkdir -p data/geo_data/temperatures
 Copy both the `v4.mean_GISS_homogenized.txt` and `stations.txt` to the
 `data/geo_data/temperatures` directory.
 
-See [Data Loading](/docs/README-loading.md) for instructions on turning this data into
-a geomesh dataset.
+See the [os-geo-h3loader-cli] repository for instructions on turning this 
+data into a geomesh dataset.
 
 ### Starting the server
 
@@ -133,7 +136,7 @@ predict values as unknown points.
 A CLI is available that makes it easy to interact
 with the service:
 ~~~~
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT --help
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT --help
 
 usage: cli_geospatial.py [-h] [--verbose] --host HOST --port PORT
                          {addmeta,showmeta,filter,visualize,visualize-dataset,initialize,show} ...
@@ -214,7 +217,7 @@ LONGITUDE=-79.059 ;
 RESOLUTION=3 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -236,7 +239,7 @@ CELL="832b9bfffffffff" ;
 RADIUS=200 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell "$CELL" \
     --radius $RADIUS \
@@ -254,7 +257,7 @@ DATASET="jamaica_buildings" ;
 CELL="8867328a6dfffff" ;
 RADIUS=200 ;
 TYPE=point ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell $CELL \
     --radius $RADIUS \
@@ -274,7 +277,7 @@ DATASET="giss_temperature_dec_2022" ;
 CELL="832b9bfffffffff" ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell "$CELL" \
     --year $YEAR \
@@ -286,7 +289,7 @@ python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
 DATASET="jamaica_buildings" ;
 CELL="8867328a6dfffff" ;
 TYPE=point ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell $CELL \
     --radius $RADIUS \
@@ -310,7 +313,7 @@ RESOLUTION=3 ;
 REGION="Canada" ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
@@ -325,7 +328,7 @@ DATASET="jamaica_buildings"
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 REGION="Jamaica" ;
 TYPE=point ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
@@ -354,7 +357,7 @@ the `./samples/cells-3.json` file.
 RESOLUTION=3 ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 TOLERANCE=0.1 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter \
     --shapefile "$SHAPEFILE" \
     --resolution $RESOLUTION \
     --tolerance $TOLERANCE \
@@ -370,7 +373,7 @@ to create a visualization of those cells:
 RESOLUTION=3 ;
 CELLS_PATH="./samples/cells-WORLD-$RESOLUTION.json" ;
 MAP_PATH="./samples/cells-WORLD-$RESOLUTION.html" ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize \
     --cells_path $CELLS_PATH \
     --map_path $MAP_PATH
 ~~~~
@@ -404,7 +407,7 @@ MIN_LONG=4.5 ;
 MAX_LONG=16.5 ;
 THRESHOLD=0.1 ;
 
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
 --database-dir $DATABASE_DIR \
 --dataset $DATASET \
 --resolution $RESOLUTION \
@@ -442,7 +445,7 @@ MAX_LONG=16.5 ;
 THRESHOLD=0.1 ;
 DS_TYPE="point" ;
 
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
 --database-dir $DATABASE_DIR \
 --dataset $DATASET \
 --resolution $RESOLUTION \
@@ -470,7 +473,7 @@ DESCRIPTION="Temperature data for the entire globe" ;
 VALUE_COLUMNS="{\"temperature\":\"REAL\"}" ;
 KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="h3" ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
@@ -486,7 +489,7 @@ all datasets.
 
 ~~~
 DATABASE_DIR="./tmp" ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
     --database_dir $DATABASE_DIR
 ~~~
 
@@ -576,4 +579,9 @@ Arguments required
 | month      | int   | The month to retrieve data for. must be an integer between 1 and 12. Optional Parameter. |
 | day        | int   | The day to retrieve data for. must be an integer between 1 and 31. Optional parameter.   |
 
+
+[world-administrative-boundaries.zip]: https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York
+[v4.mean_GISS_homogenized.txt]: https://data.giss.nasa.gov/gistemp/station_data_v4_globe/v4.mean_GISS_homogenized.txt.gz
+[stations.txt]: https://data.giss.nasa.gov/gistemp/station_data_v4_globe/station_list.txt
+[os-geo-h3loader-cli]: https://github.com/os-climate/osc-geo-h3loader-cli
 

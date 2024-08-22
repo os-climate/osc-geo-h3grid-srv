@@ -94,9 +94,10 @@ In order to run the below examples, shapefiles will need to be downloaded from
 the following link (if not already downloaded)
 
 Shapefiles source:
-- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
+- [world-administrative-boundaries.zip]
 
-Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
+Retrieved from parent site: 
+https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
 - retrieved as a dataset from the "Geographic file formats" section,
 "Shapefile" element, by clicking the "Whole dataset" link
 
@@ -123,14 +124,15 @@ data
 A shapefile for Canada is available below
 
 Canada Shapefile
-- [website](https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/index2021-eng.cfm?year=21)
+- [website][1]
   - From the Boundary file options, select:
     - Language: English
     - Type: Cartographic Boundary Files (CBF)
     - Administrative boundaries: Census divisions
     - Format: Shapefile (.shp)
   - Then hit the continue button.
-  - This should bring up a link labeled `lcd_000b21a_e.zip (ZIP version, 136,594.0 kb)`
+  - This should bring up a link labeled 
+`lcd_000b21a_e.zip (ZIP version, 136,594.0 kb)`
     - click this link to download the `lcd_000b21a_e.zip` file
 
 Create the `./data/shapefiles/CAN` directory to hold this shapefile
@@ -160,7 +162,7 @@ command to do so (this may take several minutes):
 
 ~~~~
 SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e.shp" ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
     --shapefile "$SHAPEFILE"
 ~~~~
 
@@ -186,13 +188,15 @@ data
 A shapefile for the USA is available below:
 
 USA Shapefile:
-- [website](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)
-  - The will be a section of the page with the following headings: 2023, 2023 TIGER/Line Shapefiles, Download
+- [website][2]
+  - The will be a section of the page with the following headings:
+2023, 2023 TIGER/Line Shapefiles, Download
   - Select the "Web Interface" link from this section
   - select 2023 as the year, and "Counties (and equivalent)" as the Layer
   - Hit the submit button
     - This will bring up a different page
-  - Click the "Download national file" button. This will download the `tl_2023_us_county.zip` file
+  - Click the "Download national file" button. This will download the
+`tl_2023_us_county.zip` file
 
 Create the `./data/shapefiles/USA` directory to hold this shapefile
 
@@ -224,7 +228,7 @@ data
 A CLI is available that makes it easy to interact
 with the service:
 ~~~~
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT --help
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT --help
 
 usage: cli_shapefile.py [-h] [--verbose] --host HOST --port PORT {transform,statistics,simplify,buffer,view} ...
 
@@ -255,7 +259,7 @@ the resulting files in the same location of the original
 with `-wgs84` appended to their file name:
 ~~~~
 SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e.shp" ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT transform \
     --shapefile "$SHAPEFILE"
 ~~~~
 
@@ -268,7 +272,7 @@ of the shapefile.
 Example: World map
 ~~~~
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
     --shapefile "$SHAPEFILE"
 
 {
@@ -304,7 +308,7 @@ Example: USA map (is relatively simple, with 3371 polygons, but
 has lots of attributes):
 ~~~~
 SHAPEFILE="./data/shapefiles/USA/tl_2023_us_county.shp" ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
     --shapefile "$SHAPEFILE"
 
 {
@@ -341,7 +345,7 @@ with the bulk of the polygons actually contained in
 multi-polygons):
 ~~~~
 SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e-wgs84.shp" ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT statistics \
     --shapefile "$SHAPEFILE"
 
 {
@@ -455,7 +459,8 @@ system of the shapefile.
 
 ### Simplify Examples
 
-The simplify command will take a shapefile and simplify it down to a smaller version.
+The simplify command will take a shapefile and simplify it down to
+a smaller version.
 The command will simplify and display statistics by default, with an optional
 `--path` parameter that will store the result into a new shapefile.
 
@@ -463,7 +468,7 @@ Simplify the WORLD map (notice the reduced number of vertices):
 ~~~~
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 TOLERANCE=0.1 ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
     --shapefile "$SHAPEFILE" \
     --tolerance $TOLERANCE
 
@@ -500,7 +505,7 @@ Simplify the USA map (notice the reduced number of vertices):
 ~~~~
 SHAPEFILE="./data/shapefiles/USA/tl_2023_us_county.shp" ;
 TOLERANCE=0.1 ;
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
     --shapefile "$SHAPEFILE" \
     --tolerance $TOLERANCE
 
@@ -543,7 +548,7 @@ SHAPEFILE="./data/shapefiles/CAN/lcd_000b21a_e-wgs84.shp" ;
 TOLERANCE=0.01 ;
 PATH="./data/shapefiles/CAN/lcd_000b21a_e-wgs84-simplified.shp"
 
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT simplify \
     --shapefile "$SHAPEFILE" \
     --tolerance $TOLERANCE \
     --path "$PATH"
@@ -655,7 +660,7 @@ DISTANCE=11100 ;
 DISTANCE_UNITS="meters"
 DISTANCE=0.1 ;
 DISTANCE_UNITS="degrees"
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT buffer \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT buffer \
     --shapefile "$SHAPEFILE" \
     --distance $DISTANCE \
     --units "$DISTANCE_UNITS"
@@ -700,7 +705,11 @@ SHAPEFILE="./data/shapefiles/USA/tl_2023_us_county.shp" ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 SHAPEFILE="./tmp/sample.shp" ;
 OUTPUT_PATH="./tmp/view.html"
-python ./src/cli_shapefile.py $VERBOSE --host $HOST --port $PORT view \
+python ./src/cli/cli_shapefile.py $VERBOSE --host $HOST --port $PORT view \
     --shapefile "$SHAPEFILE" \
     --path "$OUTPUT_PATH"
 ~~~~
+
+[world-administrative-boundaries.zip]: https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York
+[1]: https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/index2021-eng.cfm?year=21
+[2]: https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html

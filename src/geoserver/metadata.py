@@ -273,11 +273,13 @@ class MetadataDB:
 
         for c_name in col_names:
             non_al_num = self._get_non_alphanum_chars(c_name)
+            non_al_num = [c for c in non_al_num if c != "_"]
             if len(non_al_num) > 0:
                 raise ValueError(
-                    f"column names must be alphanumeric."
+                    f"column names must contain only '_' and alphanumeric"
+                    f" characters."
                     f" column name: [{c_name}] contained"
-                    f" non-alphanumeric character(s): [{non_al_num}]"
+                    f" invalid character(s): {non_al_num}"
                 )
 
         return result

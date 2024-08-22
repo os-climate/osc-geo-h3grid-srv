@@ -20,4 +20,10 @@ export ROOT_DIR="$HOME_DIR"
 export PROJECT="osc-geo-h3grid-srv"
 export PROJECT_DIR="$ROOT_DIR/$PROJECT"
 
+if [ -z ${PYTHONPATH+x} ]; then
+    export PYTHONPATH="$PROJECT_DIR/src"
+else
+    export PYTHONPATH="$PYTHONPATH:$PROJECT_DIR/src"
+fi
+
 $PROJECT_DIR/bin/show.sh

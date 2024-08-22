@@ -17,7 +17,6 @@ import re
 
 from geoserver import metadata
 from common import dataset_utilities, const
-from cli import visualizer
 from shape import shape
 
 # Set up logging
@@ -223,8 +222,18 @@ class Geomesh:
         out_db_path = self._get_db_path(dataset_name)
         connection = duckdb.connect(database=out_db_path)
 
+        k_cols = meta["key_columns"]["key"]
+        if "day" in k_cols:
+            interval = "daily"
+        elif "month" in k_cols:
+            interval = "monthly"
+        elif "year" in k_cols:
+            interval = "yearly"
+        else:
+            interval = "one_time"
+
         time_filter, time_params = self._get_time_filters(
-            meta["interval"], year, month, day)
+            interval, year, month, day)
 
         cells_per_part = 20000
         if len(cells) > cells_per_part:
@@ -244,11 +253,13 @@ class Geomesh:
 
         if ds_type == "h3":
             cell_column = const.CELL_COL
+        elif ds_type == "h3_index":
+            cell_column = const.CELL_COL
         elif ds_type == "point":
             cell_column = f"cell{resolution}"
         else:
             raise ValueError(
-                "only h3 and point dataset types are supported"
+                "only h3, h3_index, and point dataset types are supported"
                 " for retrieving values within radius."
                 f" Provided type was: {ds_type}"
             )
@@ -342,8 +353,18 @@ class Geomesh:
         out_db_path = self._get_db_path(dataset_name)
         connection = duckdb.connect(database=out_db_path)
 
+        k_cols = meta["key_columns"]["key"]
+        if "day" in k_cols:
+            interval = "daily"
+        elif "month" in k_cols:
+            interval = "monthly"
+        elif "year" in k_cols:
+            interval = "yearly"
+        else:
+            interval = "one_time"
+
         time_filter, time_params = self._get_time_filters(
-            meta["interval"], year, month, day)
+            interval, year, month, day)
 
         # get maximum lat/long for a given shapefile region to get the database
         #  to filter out as many datapoints as possible before we have to
@@ -534,7 +555,7 @@ class Geomesh:
         val_col_names: List[str] = meta["value_columns"]["key"]
         ds_type = meta["dataset_type"]
 
-        if ds_type != "h3":
+        if ds_type != "h3" and ds_type != "h3_index":
             raise ValueError(
                 f"dataset {dataset_name} is not an h3 dataset. Instead it"
                 f"was {ds_type}"
@@ -607,12 +628,24 @@ class Geomesh:
         out_db_path = self._get_db_path(dataset_name)
         connection = duckdb.connect(database=out_db_path)
 
+        k_cols = meta["key_columns"]["key"]
+        if "day" in k_cols:
+            interval = "daily"
+        elif "month" in k_cols:
+            interval = "monthly"
+        elif "year" in k_cols:
+            interval = "yearly"
+        else:
+            interval = "one_time"
+
         time_filter, time_params = self._get_time_filters(
-            meta["interval"], year, month, day)
+            interval, year, month, day)
 
         value_columns = ", ".join(val_col_names)
 
         if ds_type == "h3":
+            cell_column = const.CELL_COL
+        elif ds_type == "h3_index":
             cell_column = const.CELL_COL
         elif ds_type == "point":
             col_list = connection.execute(f"describe {table_name}").fetchall()
@@ -697,7 +730,7 @@ class Geomesh:
         col_names: List[str] = meta["value_columns"]["key"]
         value_columns = ", ".join(col_names)
         ds_type = meta["dataset_type"]
-        if ds_type != "h3":
+        if ds_type != "h3" and ds_type != "h3_index":
             raise ValueError(
                 "the dataset specified was not an h3 dataset. This dataset:"
                 f" {dataset_name} is of type: {ds_type}"
@@ -718,16 +751,26 @@ class Geomesh:
 
         params = [cell]
 
+        k_cols = meta["key_columns"]["key"]
+        if "day" in k_cols:
+            interval = "daily"
+        elif "month" in k_cols:
+            interval = "monthly"
+        elif "year" in k_cols:
+            interval = "yearly"
+        else:
+            interval = "one_time"
+
         time_filter, time_params = self._get_time_filters(
-            meta["interval"], year, month, day)
+            interval, year, month, day)
         for param in time_params:
             params.append(param)
 
-        cell_where = "cell = ?"
+        cell_where = f"{const.CELL_COL} = ?"
         full_where = self._combine_where_clauses([cell_where, time_filter])
 
         sql = f"""
-            SELECT cell, latitude, longitude, {value_columns}
+            SELECT {const.CELL_COL}, latitude, longitude, {value_columns}
             FROM {table_name}
             {full_where}
         """
@@ -775,8 +818,18 @@ class Geomesh:
 
         params = [cell]
 
+        k_cols = meta["key_columns"]["key"]
+        if "day" in k_cols:
+            interval = "daily"
+        elif "month" in k_cols:
+            interval = "monthly"
+        elif "year" in k_cols:
+            interval = "yearly"
+        else:
+            interval = "one_time"
+
         time_filter, time_params = self._get_time_filters(
-            meta["interval"], year, month, day)
+            interval, year, month, day)
         for param in time_params:
             params.append(param)
 
@@ -933,8 +986,18 @@ class Geomesh:
             max_long,
         ))
 
+        k_cols = meta["key_columns"]["key"]
+        if "day" in k_cols:
+            interval = "daily"
+        elif "month" in k_cols:
+            interval = "monthly"
+        elif "year" in k_cols:
+            interval = "yearly"
+        else:
+            interval = "one_time"
+
         time_filter, time_params = self._get_time_filters(
-            meta["interval"], year, month, day)
+            interval, year, month, day)
 
         cells_per_part = 20000
         if len(cells) > cells_per_part:
@@ -1082,11 +1145,9 @@ class Geomesh:
             day: Optional[int],
 
     ) -> Tuple[Optional[str], List[Any]]:
-        if interval not in metadata.VALID_META_INTERVALS:
-            raise ValueError(
-                f"recieved invalid interval: {interval}. Valid intervals"
-                f" are {metadata.VALID_META_INTERVALS}"
-            )
+        valid_intervals = ["one_time", "yearly", "monthly", "daily"]
+        if interval not in valid_intervals:
+            raise ValueError("invalid interval")
 
         has_year = ["yearly", "monthly", "daily"]
 
@@ -1143,6 +1204,8 @@ class Geomesh:
                 )
             table_name = dataset_name + f"_{resolution}"
         elif ds_type == "point":
+            table_name = dataset_name
+        elif ds_type == "h3_index":
             table_name = dataset_name
         else:
             raise ValueError(
@@ -1300,9 +1363,6 @@ class Geomesh:
         scale_factor = KM_PER_DEGREE * KM_PER_DEGREE * angle_factor
 
         return scale_factor
-
-    def _visualize_map(self, cells: List[str], map_path: str) -> str:
-        return visualizer.HexGridVisualizer.visualize_h3_cells(cells, map_path)
 
 
     def _get_db_path(self, db_name: str) -> str:

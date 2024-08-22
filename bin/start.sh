@@ -23,4 +23,4 @@ function showHelp {
     echo " "
 }
 
-python $PROJECT_DIR/src/server.py "$@"
+python $PROJECT_DIR/src/geoserver/server.py "$@"

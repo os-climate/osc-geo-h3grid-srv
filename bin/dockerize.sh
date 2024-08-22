@@ -170,7 +170,7 @@ publish() {
     echo "Attempt to publish docker image failed!"
   fi
 
-  if [[ "$LATEST" == "true" ]]
+  if [[ "$LATEST" == "true" ]]; then
     echo "Pushing image to Docker as latest"
     docker push "$IMAGE_NAME:latest"
     DOCKER_RETURN=$?
@@ -180,6 +180,7 @@ publish() {
     else
       echo "Attempt to publish docker image as latest failed!"
     fi
+  fi
 }
 
 echo "Changing directory to sandbox directory ($WORKING_DIR)"

@@ -82,7 +82,7 @@ pip install -r requirements.txt
 A CLI is available that makes it easy to interact
 with the service:
 ~~~~
-python ./src/cli_repository.py $VERBOSE --host $HOST --port $PORT --help
+python ./src/cli/cli_repository.py $VERBOSE --host $HOST --port $PORT --help
 
 ~~~~
 
@@ -103,7 +103,7 @@ let's register it with the repository:
 REPOSITORY="./repository" ;
 NAME="WORLD" ;
 CONTENTS="./tmp/WORLD.zip" ;
-python ./src/cli_repository.py $VERBOSE --host $HOST --port $PORT register \
+python ./src/cli/cli_repository.py $VERBOSE --host $HOST --port $PORT register \
     --repository "$REPOSITORY" \
     --name "$NAME" \
     --contents "$CONTENTS"
@@ -119,7 +119,7 @@ Now that we have registered a shapefile, we can see
 what named shapefiles exist in our repository:
 ~~~~
 REPOSITORY="./repository" ;
-python ./src/cli_repository.py $VERBOSE --host $HOST --port $PORT inventory \
+python ./src/cli/cli_repository.py $VERBOSE --host $HOST --port $PORT inventory \
     --repository "$REPOSITORY"
 
 [
@@ -135,7 +135,7 @@ previously registered shapefile:
 ~~~~
 REPOSITORY="./repository" ;
 NAME="WORLD" ;
-python ./src/cli_repository.py $VERBOSE --host $HOST --port $PORT unregister \
+python ./src/cli/cli_repository.py $VERBOSE --host $HOST --port $PORT unregister \
     --repository "$REPOSITORY" \
     --name "$NAME"
 
