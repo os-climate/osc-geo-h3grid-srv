@@ -44,11 +44,12 @@ The server can be started in local mode with the below command:
 
 ### Running as a Docker Image
 
-The geo server can be run either directly on your local machine, or as a docker image.
-If running on directly on a local machine, this section can be skipped.
+The geo server can be run either directly on your local machine, or as a 
+docker image. If running on directly on a local machine, this section 
+can be skipped.
 
-In order to create a docker image the `DOCKERHUB_USERNAME` environment variable must
-be set to a valid dockerhub username.
+In order to create a docker image the `DOCKER_USERNAME` environment 
+variable must be set to a valid dockerhub username.
 
 A Dockerfile is provided for this service. A docker image for this service can be
 creating using the following script, which will create but not publish the image:
@@ -57,13 +58,21 @@ creating using the following script, which will create but not publish the image
 $PROJECT_DIR/bin/dockerize.sh
 ```
 
-In order to publish this image the `DOCKERHUB_TOKEN` environment variable
+In order to publish this image the `DOCKER_TOKEN` environment variable
 must be set to a dockerhub token that is associated with the username set in the
-`DOCKERHUB_USERNAME` environment variable. Then the below command can be
-executed to create and publish an image:
+`DOCKER_USERNAME` environment variable. Additionally, the
+`DOCKER_REGISTRY` environment variable must be set if publishing
+to a custom registry. 
 
-```
-$PROJECT_DIR/bin/dockerize.sh --publish
+Then the below command can be executed to create and publish an image,
+with the `--publish` argument controlling whether the image is published,
+and where it is published to. The `--latest` argument controls whether a
+specific version is published, or whether this version will also be published
+as "latest". The `--version` argument controls what specific version number
+the image will have when published.
+
+```console
+$PROJECT_DIR/bin/dockerize.sh --publish [false|custom|dockerhub] [--latest] [--version <version>]
 ```
 
 To run this image use the following command
@@ -72,7 +81,8 @@ To run this image use the following command
 ./bin/startd.sh 0 config.yml
 ```
 
-Note that if using docker mode, some CLI calls must be made from within the docker image.
+Note that if using docker mode, some CLI calls must be made from
+within the docker image.
 
 ### Configuring the CLI
 
@@ -119,13 +129,15 @@ In order to run the below examples, shapefiles will need to be downloaded from
 the following link:
 
 Shapefiles source:
-- [world-administrative-boundaries.zip](https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York):
+- [world-administrative-boundaries.zip][1]
 
-Retrieved from parent site: https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
+Retrieved from parent site: 
+https://public.opendatasoft.com/explore/dataset/world-administrative-boundaries/export/
 - retrieved as a dataset from the "Geographic file formats" section,
 "Shapefile" element, by clicking the "Whole dataset" link
 
-Create the `data/shapefiles/WORLD` directory as below (if it does not already exist)
+Create the `data/shapefiles/WORLD` directory as below 
+(if it does not already exist)
 ~~~
 mkdir -p ./data/shapefiles/WORLD
 ~~~
@@ -177,7 +189,7 @@ STATIONS="./data/geo_data/temperatures/station_list.txt" ;
 TEMPERATURE="./data/geo_data/temperatures/v4.mean_GISS_homogenized.txt" ;
 OUTPUT="./data/geo_data/temperatures/giss_2022_12.csv"
 
-python ./examples/loading/common/temp_giss_to_csv.py \
+python ./examples/common/temp_giss_to_csv.py \
 --stations $STATIONS \
 --temperature $TEMPERATURE \
 --output $OUTPUT
@@ -192,6 +204,12 @@ mkdir ./tmp
 
 ## Loading Data
 
+In order to load data the 
+[os-geo-h3loader-cli]
+library must be used to generate the databases that the server
+uses. Instructions in this section will frequently refer to files
+in that repository.
+
 In order to load this data into the geo server, run the below command. This
 will create the dataset in the `./tmp` directory.
 
@@ -201,12 +219,13 @@ and region - Germany - that controls what region of the world data is loaded
 for. Data will not be calculated for any part of the h3 grid that is
 not within this region.
 
-This takes about 1 minute to run.
+This takes about 1 minute to run, and should be run using code from 
+the [os-geo-h3loader-cli] repository.
 
 ```
 CONFIG_PATH="./examples/getting-started/giss_2022_12.yml" ;
 
-python ./src/cli_load.py --host $HOST --port $PORT load \
+python ./src/cli/cli_load.py --host $HOST --port $PORT load \
 --config_path $CONFIG_PATH
 ```
 
@@ -229,7 +248,7 @@ DESCRIPTION="GISS temperature data for December 2022 in Germany" ;
 VALUE_COLUMNS="{\"temperature\":\"REAL\"}" ;
 KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
 DATASET_TYPE="h3" ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
     --database_dir $DATABASE_DIR \
     --dataset_name $DATASET_NAME \
     --description "$DESCRIPTION" \
@@ -244,7 +263,7 @@ To view the current metadata, run the below command:
 
 ~~~
 DATABASE_DIR="./tmp" ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
     --database_dir $DATABASE_DIR
 ~~~
 
@@ -270,7 +289,7 @@ RESOLUTION=5 ;
 RADIUS=200 ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
@@ -286,13 +305,13 @@ This example uses a shapefile to return only data for hexagons
 within the bounds of Germany.
 
 ~~~
-DATASET="giss_temperature_2022_12_example"
+DATASET="giss_temperature_2022_12_example" ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
 RESOLUTION=3 ;
 REGION="Germany" ;
 YEAR=2022 ;
 MONTH=12 ;
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
@@ -325,7 +344,7 @@ THRESHOLD=0.02 ;
 YEAR=2022 ;
 MONTH=12 ;
 
-python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
 --database-dir $DATABASE_DIR \
 --dataset $DATASET \
 --resolution $RESOLUTION \
@@ -340,3 +359,6 @@ python ./src/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-data
 --year $YEAR \
 --month $MONTH
 ~~~
+
+[os-geo-h3loader-cli]: https://github.com/os-climate/osc-geo-h3loader-cli
+[1]: https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York

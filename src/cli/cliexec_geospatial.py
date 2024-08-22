@@ -15,7 +15,6 @@ import pandas
 from geoserver.geomesh import Geomesh
 from geoserver import geomesh_router, metadata
 from geoserver import point_router
-import visualizer
 from common import httputils
 
 
@@ -189,25 +188,27 @@ class CliExecGeospatial:
             dataset: str,
             shapefile: str,
             region: Optional[str],
-            resolution: int,
-            year: int,
+            resolution: Optional[int],
+            year: Optional[int],
             month: Optional[int],
             day: Optional[int],
             type: str
     ):
         params = {
             "shapefile": shapefile,
-            "resolution": resolution,
-            "year": year
         }
         if region is not None:
             params["region"] = region
+        if year is not None:
+            params["year"] = year
         if month is not None:
             params["month"] = month
         if day is not None:
             params["day"] = day
+        if resolution is not None:
+            params["resolution"] = resolution
 
-        if type == "h3":
+        if type == "h3" or type == "h3_index":
             service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/shapefile/{dataset}"
         else:
             service = f"{point_router.POINT_ENDPOINT_PREFIX}/shapefile/{dataset}"
@@ -247,75 +248,3 @@ class CliExecGeospatial:
         result = geomesh.filter(shapefile, resolution=resolution,
                                 tolerance=tolerance)
         return result
-
-    def visualize(self, cells_path: str, map_path: str) -> str:
-        cells = None
-        with open(cells_path, 'r') as file:
-            cells = json.load(file)
-
-        geomesh = Geomesh(None)
-        result = geomesh.visualize(cells, map_path)
-        return result
-
-    def visualize_dataset(
-            self,
-            database_dir: str,
-            resolution: int,
-            dataset: str,
-            value_column: str,
-            max_color_rgb: Tuple[int, int, int],  # hex rgb values
-            output_file: str,
-            min_lat: float,
-            max_lat: float,
-            min_long: float,
-            max_long: float,
-            threshold: Optional[float],
-            year: Optional[int],
-            month: Optional[int],
-            day: Optional[int],
-            ds_type: str,
-            visualizer_type: str = "HexGridVisualizer"
-    ):
-        geo = Geomesh(database_dir)
-        ds = geo.bounding_box_get(
-            dataset,
-            resolution,
-            min_lat,
-            max_lat,
-            min_long,
-            max_long,
-            year,
-            month,
-            day
-        )
-        ds_pandas = pandas.json_normalize(ds)
-
-        if visualizer_type == "HexGridVisualizer":
-            vis = visualizer.HexGridVisualizer(
-                ds_pandas,
-                value_column,
-                max_color_rgb,
-                min_lat,
-                max_lat,
-                min_long,
-                max_long
-            )
-            vis.visualize_dataset(resolution, output_file, threshold, ds_type)
-
-        elif visualizer_type == "PointLocationVisualizer":
-            if ds_type != "point":
-                raise ValueError(
-                    "PointLocationVisualizer visualizer type is not compatible"
-                    f" with dataset type {ds_type}"
-                )
-            vis = visualizer.PointLocationVisualizer(
-                ds_pandas,
-                value_column,
-                min_lat,
-                max_lat,
-                min_long,
-                max_long
-            )
-            vis.visualize_dataset(output_file)
-
-        print(f"created visualization file at location: {output_file}")

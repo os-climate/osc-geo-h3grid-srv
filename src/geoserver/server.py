@@ -7,6 +7,7 @@
 # Created: 2024-03-08 by davis.broda@brodagroupsoftware.com
 import argparse
 import logging
+import os
 
 import uvicorn as uvicorn
 import yaml
@@ -15,6 +16,8 @@ from fastapi import FastAPI
 import state
 from geoserver.geomesh_router import router as geomesh_router
 from geoserver.point_router import router as point_router
+
+from multiprocessing import Manager
 
 # Set up logging
 LOGGING_FORMAT = \
@@ -33,7 +36,6 @@ DEFAULT_PORT = 8000
 
 # TODO: move this into a configuration file
 # database_dir = "../databases"
-
 
 if __name__ == "__main__":
     logger.info("Server starting...")
@@ -56,7 +58,8 @@ if __name__ == "__main__":
 
     database_dir = configuration['database-dir']
 
-    state.add_global("database_dir", database_dir)
+    # state.add_global("database_dir", database_dir)
+    os.environ["GEOSERVER_DATABASE_DIR"] = database_dir
 
     uvicorn.run(app, host=host, port=port)
 

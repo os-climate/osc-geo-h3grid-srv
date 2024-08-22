@@ -75,6 +75,8 @@ async def geomesh_latlong_radius_post(
             params.day
         )
     except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -84,7 +86,7 @@ class GeomeshLatLongPointArgs(BaseModel):
     longitude: float = Field(description="The longitude of the central point")
 
     resolution: int = Field(
-        3, description="The resolution to retrieve data for")
+        7, description="The resolution to retrieve data for")
 
     year: Optional[int] = Field(
         None, description="The year to retrieve data for")
@@ -124,6 +126,8 @@ async def geomesh_latlong_point_post(
         )
         return resp
     except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -170,6 +174,8 @@ async def geomesh_cell_radius_post(
             params.day
         )
     except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -211,6 +217,8 @@ async def geomesh_cell_point(
             params.day
         )
     except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -230,7 +238,8 @@ class GeomeshShapefileArgs(BaseModel):
                     " be used.")
 
     resolution: int = Field(
-        3, description="The h3 resolution to retrieve data for")
+        default=7,
+        description="The h3 resolution to retrieve data for")
 
     year: Optional[int] = Field(
         None, description="The year to retrieve data for")
@@ -263,4 +272,6 @@ async def geomesh_shapefile(
             params.day
         )
     except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
