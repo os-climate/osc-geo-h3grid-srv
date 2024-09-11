@@ -19,7 +19,7 @@ import time
 from functools import partial
 from typing import Optional
 
-from cliexec_geospatial import CliExecGeospatial
+from .cliexec_geospatial import CliExecGeospatial
 
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 LOGGING_LEVEL = logging.INFO
@@ -193,6 +193,19 @@ def filter(parser: argparse.ArgumentParser):
 
     output = cliexec.filter(args.shapefile, int(args.resolution), float(args.tolerance))
     print(json.dumps(output, indent=2))
+
+def filter_assets(args: argparse.Namespace):
+    logger.info(f"Using asset file:{args.asset_file}")
+    logger.info(f"Using dataset file:{args.dataset_file}")
+
+    cliexec = CliExecGeospatial({
+        "host": args.host,
+        "port": int(args.port)
+    })
+
+    output = cliexec.filter_assets(args.asset_file, args.dataset_file)
+    out_str = json.dumps(output, indent=2, ensure_ascii=False)
+    return out_str
 
 def visualize(parser: argparse.ArgumentParser):
     args = parser.parse_args()
@@ -405,6 +418,16 @@ def add_filter_parser(
         "--tolerance",
         help="Shapefile simplification (0.01-0.1, default: 0.1")
 
+def add_filter_assets_parser(
+    subparsers
+):
+    f_asset_parser = subparsers.add_parser(
+        "filter-assets",
+        help="Filter assets based on conditions in specified datasets")
+    f_asset_parser.add_argument(
+        "--asset-file", required=True, help="Path to asset file")
+    f_asset_parser.add_argument(
+        "--dataset-file", required=True, help="Path to dataset file")
 
 def add_visualize_parser(
     subparsers
@@ -509,7 +532,7 @@ def add_viualize_dataset_parser(
     )
 
 
-def execute():
+def execute(xargs=None):
     """
     Main function that sets up the argparse CLI interface.
     """
@@ -528,13 +551,14 @@ def execute():
     add_meta_parser(subparsers)
     show_meta_parser(subparsers)
     add_filter_parser(subparsers)
+    add_filter_assets_parser(subparsers)
     add_visualize_parser(subparsers)
     add_viualize_dataset_parser(subparsers)
 
     add_initialize_parser(subparsers)
     add_show_parser(subparsers)
 
-    args = parser.parse_args()
+    args = parser.parse_args(xargs if xargs is not None else sys.argv[1:])
     logger.info(args)
     # print(args)
 
@@ -542,9 +566,12 @@ def execute():
     logging_format = "%(asctime)s - %(levelname)s - %(message)s"
     logging.basicConfig(format=logging_format, level=logging.INFO if args.verbose else logging.WARNING)
 
+    out_str = None
     # Execute corresponding function based on provided command
     if args.command == "filter":
         filter(parser)
+    elif args.command == "filter-assets":
+        out_str = filter_assets(args)
     elif args.command == "visualize":
         visualize(parser)
     elif args.command == "visualize-dataset":
@@ -560,8 +587,11 @@ def execute():
     else:
         usage(parser, "Command missing - please provide command")
 
+    if out_str is not None:
+        print(out_str)
+    return out_str
 
 if __name__ == "__main__":
 
     # Execute mainline
-    execute()
+    execute(sys.argv[1:])

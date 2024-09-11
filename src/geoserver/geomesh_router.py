@@ -12,6 +12,10 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from geoserver.geomesh import Geomesh, CellDataRow
+from .correlator import Correlator
+from .geomesh_router_arguments import FilterArgs, GeomeshShapefileArgs, \
+    GeomeshCellPointArgs, GeomeshLatLongRadiusArgs, GeomeshLatLongPointArgs, \
+    GeomeshCellRadiusArgs
 from .route_constants import API_PREFIX
 from . import state
 
@@ -25,29 +29,6 @@ router = APIRouter()
 GEO_ENDPOINT_PREFIX = API_PREFIX + "/geomesh"
 
 
-class GeomeshLatLongRadiusArgs(BaseModel):
-    latitude: float = Field(description="The latitude of the central point")
-
-    longitude: float = Field(description="The longitude of the central point")
-
-    radius: float = Field(
-        description="The radius to retrieve around the central point"
-    )
-
-    resolution: int = Field(
-        3,
-        description="The h3 resolution level to retrieve data for"
-    )
-
-    year: Optional[int] = Field(
-        None, description="The year to retrieve data for")
-
-    month: Optional[int] = Field(
-        None, description="The month to retrieve data for")
-
-    day: Optional[int] = Field(
-        None, description="The day to retrieve data for")
-
 @router.post(GEO_ENDPOINT_PREFIX + "/latlong/radius/{dataset}")
 async def geomesh_latlong_radius_post(
         dataset: str,
@@ -59,7 +40,8 @@ async def geomesh_latlong_radius_post(
     :return: The data within specified radius
     :rtype: List[CellDataRow]
     """
-    logger.info(f"Retrieving data for lat-lon radius, dataset:{dataset} params:{params}")
+    logger.info(
+        f"Retrieving data for lat-lon radius, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
@@ -80,24 +62,6 @@ async def geomesh_latlong_radius_post(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class GeomeshLatLongPointArgs(BaseModel):
-    latitude: float = Field(description="The latitude of the central point")
-
-    longitude: float = Field(description="The longitude of the central point")
-
-    resolution: int = Field(
-        7, description="The resolution to retrieve data for")
-
-    year: Optional[int] = Field(
-        None, description="The year to retrieve data for")
-
-    month: Optional[int] = Field(
-        None, description="The month to retrieve data for")
-
-    day: Optional[int] = Field(
-        None, description="The day to retrieve data for")
-
-
 @router.post(GEO_ENDPOINT_PREFIX + "/latlong/point/{dataset}")
 async def geomesh_latlong_point_post(
         dataset: str,
@@ -110,7 +74,8 @@ async def geomesh_latlong_point_post(
     :rtype: Dict[str, Any]
     """
 
-    logger.info(f"Retrieving data for lat-lon point, dataset:{dataset} params:{params}")
+    logger.info(
+        f"Retrieving data for lat-lon point, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
@@ -131,22 +96,6 @@ async def geomesh_latlong_point_post(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class GeomeshCellRadiusArgs(BaseModel):
-    cell: str = Field(description="The ID of the central cell")
-
-    radius: float = Field(
-        description="The radius to retrieve around the central point")
-
-    year: Optional[int] = Field(
-        None, description="The year to retrieve data for")
-
-    month: Optional[int] = Field(
-        None, description="The month to retrieve data for")
-
-    day: Optional[int] = Field(
-        None, description="The day to retrieve data for")
-
-
 @router.post(GEO_ENDPOINT_PREFIX + "/cell/radius/{dataset}")
 async def geomesh_cell_radius_post(
         dataset: str,
@@ -160,7 +109,8 @@ async def geomesh_cell_radius_post(
     :rtype: List[Dict[str, Any]]
     """
 
-    logger.info(f"Retrieving data for cell radius, dataset:{dataset} params:{params}")
+    logger.info(
+        f"Retrieving data for cell radius, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
@@ -179,19 +129,6 @@ async def geomesh_cell_radius_post(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class GeomeshCellPointArgs(BaseModel):
-    cell: str = Field(description="The ID of the central cell")
-
-    year: Optional[int] = Field(
-        None, description="The year to retrieve data for")
-
-    month: Optional[int] = Field(
-        None, description="The month to retrieve data for")
-
-    day: Optional[int] = Field(
-        None, description="The day to retrieve data for")
-
-
 @router.post(GEO_ENDPOINT_PREFIX + "/cell/point/{dataset}")
 async def geomesh_cell_point(
         dataset: str,
@@ -204,7 +141,8 @@ async def geomesh_cell_point(
     :rtype: Dict[str, Any]
     """
 
-    logger.info(f"Retrieving data for cell point, dataset:{dataset} params:{params}")
+    logger.info(
+        f"Retrieving data for cell point, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
     geo = Geomesh(db_dir)
@@ -222,41 +160,11 @@ async def geomesh_cell_point(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class GeomeshShapefileArgs(BaseModel):
-    shapefile: str = Field(
-        description="The shapefile to use. Must be a local file on"
-                    " the filesystem of the server."
-    )
-
-    region: Optional[str] = Field(
-        None,
-        description="The region within the shapefile to use. Only data within"
-                    " this specific region will be retrieved. Intended for"
-                    " use in cases where multiple entities are defined in one"
-                    " file (ex. a file containing the boundaries of every"
-                    " country in the world), but only a single one should"
-                    " be used.")
-
-    resolution: int = Field(
-        default=7,
-        description="The h3 resolution to retrieve data for")
-
-    year: Optional[int] = Field(
-        None, description="The year to retrieve data for")
-
-    month: Optional[int] = Field(
-        None, description="The month to retrieve data for")
-
-    day: Optional[int] = Field(
-        None, description="The day to retrieve data for")
-
-
 @router.post(GEO_ENDPOINT_PREFIX + "/shapefile/{dataset}")
 async def geomesh_shapefile(
         dataset: str,
         params: GeomeshShapefileArgs
 ) -> List[CellDataRow]:
-
     logger.info(f"Retrieving data shapefile, dataset:{dataset} params:{params}")
 
     db_dir = state.get_global("database_dir")
@@ -271,6 +179,28 @@ async def geomesh_shapefile(
             params.month,
             params.day
         )
+    except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(GEO_ENDPOINT_PREFIX + "/filter")
+async def filter_assets(
+        params: FilterArgs
+):
+    assets = params.assets
+    datasets = params.datasets
+    if len(assets) == 0:
+        raise ValueError("assets was empty")
+    if len(datasets) == 0:
+        raise ValueError("datasets was empty")
+
+    try:
+        db_dir = state.get_global("database_dir")
+        correlator = Correlator(db_dir)
+        results = correlator.get_correlated_data(assets, datasets)
+        return results
     except Exception as e:
         import traceback
         logger.error(traceback.format_exc())
