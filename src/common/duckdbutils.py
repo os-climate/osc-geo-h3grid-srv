@@ -101,6 +101,29 @@ def duckdb_check_table_exists(
         return False
 
 
+def duckdb_check_column_exists(
+        connection: duckdb.DuckDBPyConnection,
+        tablename: str,
+        column: str):
+
+    if not duckdb_check_table_exists(connection, tablename):
+        raise Exception(f"table {tablename} does not exist")
+
+    cur = connection.cursor()
+
+    sql = f"""
+        SELECT COUNT(*) FROM information_schema.columns
+        WHERE table_name = ? AND column_name = ?
+    """
+    res = cur.execute(sql, [tablename, column]).fetchone()
+
+    if res[0] > 0:
+        cur.close()
+        return True
+    else:
+        cur.close()
+        return False
+
 def is_general_col_type(col_type:str) -> Tuple[bool, Optional[str]]:
     """
     Determines whether a given column type is a valid general purpose

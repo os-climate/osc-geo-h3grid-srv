@@ -1,0 +1,17 @@
+[
+  {
+    "name": "tu_delft_river_flood_depth_1971_2000_hist_0010y_germany",
+    "filters": [
+      {
+        "column": "flood_risk_max",
+        "filter_type": "lesser_than",
+        "target_value": 7.3
+      },
+      {
+        "column": "flood_risk_min",
+        "filter_type": "greater_than",
+        "target_value": 0.1
+      }
+    ]
+  }
+]

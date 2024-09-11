@@ -1,0 +1,27 @@
+[
+  {
+    "id": "Berlin",
+    "latitude": 52.52,
+    "longitude": 13.40
+  },
+  {
+    "id": "Frankfurt",
+    "latitude": 50.11,
+    "longitude": 8.68
+  },
+  {
+    "id": "Brunsbüttel",
+    "latitude": 53.89,
+    "longitude": 9.13
+  },
+  {
+    "id": "Bremen",
+    "latitude": 53.08,
+    "longitude": 8.803
+  },
+  {
+    "id": "Cologne",
+    "latitude": 50.95,
+    "longitude": 6.95
+  }
+]
