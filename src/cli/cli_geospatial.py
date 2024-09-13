@@ -19,7 +19,7 @@ import time
 from functools import partial
 from typing import Optional
 
-from .cliexec_geospatial import CliExecGeospatial
+from cli.cliexec_geospatial import CliExecGeospatial
 
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 LOGGING_LEVEL = logging.INFO
@@ -221,34 +221,6 @@ def visualize(parser: argparse.ArgumentParser):
 
     output = cliexec.visualize(args.cells_path, args.map_path)
     print(json.dumps(output, indent=2))
-
-def visualize_dataset(parser: argparse.ArgumentParser):
-    args = parser.parse_args()
-
-    cliexec = CliExecGeospatial({
-        "host": args.host,
-        "port": int(args.port)
-    })
-
-    cliexec.visualize_dataset(
-        args.database_dir,
-        args.resolution,
-        args.dataset,
-        args.value_column,
-        args.max_color,
-        args.output_file,
-        args.min_lat,
-        args.max_lat,
-        args.min_long,
-        args.max_long,
-        args.threshold,
-        args.year,
-        args.month,
-        args.day,
-        args.ds_type,
-        args.visualizer_type
-    )
-
 
 def usage(parser:any, msg: str):
     print(f"Error: {msg}\n")
@@ -574,8 +546,6 @@ def execute(xargs=None):
         out_str = filter_assets(args)
     elif args.command == "visualize":
         visualize(parser)
-    elif args.command == "visualize-dataset":
-        visualize_dataset(parser)
     elif args.command == "addmeta":
         addmeta(parser)
     elif args.command == "showmeta":

@@ -42,6 +42,10 @@ The server can be started in local mode with the below command:
 ./bin/start.sh --configuration ./config/config-example.yml
 ~~~
 
+All examples laid out in this file assume that the `config-example.yml` file
+was used as the configuration, however in production you will likely wish to 
+use a custom configuration file tailored to your purposes. 
+
 ### Running as a Docker Image
 
 The geo server can be run either directly on your local machine, or as a 
@@ -157,117 +161,12 @@ data
         |-- world-adminstrative-boundaries.shx
 ~~~
 
-### Retrieve Data
-
-The GISS temperature dataset contains data on global temperatures,
-and is used as the raw data for the examples in this README. It can be
-retrieved from the below links:
-
-GISS Temperature:
-- [v4.mean_GISS_homogenized.txt](https://data.giss.nasa.gov/gistemp/station_data_v4_globe/v4.mean_GISS_homogenized.txt.gz)
-- [stations.txt](https://data.giss.nasa.gov/gistemp/station_data_v4_globe/station_list.txt)
-
-These were retrieved from this parent site: https://data.giss.nasa.gov/gistemp/station_data_v4_globe/
-
-Create the `data/geo_data/temperatures` directory using the
-below command (if it does not already exist):
-
-~~~
-mkdir -p data/geo_data/temperatures
-~~~
-
-Copy both the `v4.mean_GISS_homogenized.txt` and `stations.txt` to the
-`data/geo_data/temperatures` directory.
-
-Once the raw temperature data is retrieved, it must be turned into the sort of
-CSV that the loader can process. To do this run the below command,
-which will produce a csv for the loader representing data in the month
-of December, in the year 2022:
-
-```
-STATIONS="./data/geo_data/temperatures/station_list.txt" ;
-TEMPERATURE="./data/geo_data/temperatures/v4.mean_GISS_homogenized.txt" ;
-OUTPUT="./data/geo_data/temperatures/giss_2022_12.csv"
-
-python ./examples/common/temp_giss_to_csv.py \
---stations $STATIONS \
---temperature $TEMPERATURE \
---output $OUTPUT
-```
-
-### Create directories
-
-Create the directories needed for running the examples:
-~~~
-mkdir ./tmp
-~~~
-
-## Loading Data
-
-In order to load data the 
-[os-geo-h3loader-cli]
-library must be used to generate the databases that the server
-uses. Instructions in this section will frequently refer to files
-in that repository.
-
-In order to load this data into the geo server, run the below command. This
-will create the dataset in the `./tmp` directory.
-
-The configuration used in this example specifies the information
-needed to load the data into the database, as well as specifying a shapefile
-and region - Germany - that controls what region of the world data is loaded
-for. Data will not be calculated for any part of the h3 grid that is
-not within this region.
-
-This takes about 1 minute to run, and should be run using code from 
-the [os-geo-h3loader-cli] repository.
-
-```
-CONFIG_PATH="./examples/getting-started/giss_2022_12.yml" ;
-
-python ./src/cli/cli_load.py --host $HOST --port $PORT load \
---config_path $CONFIG_PATH
-```
-
-This command will create the `./data/geo_data/temperatures/giss_2022_12.csv` file as output.
-
-For more information on loading datasets, see the [loading README](/docs/README-loading.md).
-
-## Register the new dataset
-
-In order to work with the dataset it must be registered with the server. The
-below command will create the metadata necessary to interact with the
-previously created database. This metadata will be stored in the
-`./tmp/dataset_metadata.duckdb` database, which will be created
-if it does not already exist.
-
-```
-DATABASE_DIR="./tmp" ;
-DATASET_NAME="giss_temperature_2022_12_example" ;
-DESCRIPTION="GISS temperature data for December 2022 in Germany" ;
-VALUE_COLUMNS="{\"temperature\":\"REAL\"}" ;
-KEY_COLUMNS="{\"h3_cell\":\"VARCHAR\"}" ;
-DATASET_TYPE="h3" ;
-python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT addmeta \
-    --database_dir $DATABASE_DIR \
-    --dataset_name $DATASET_NAME \
-    --description "$DESCRIPTION" \
-    --value_columns $VALUE_COLUMNS \
-    --key_columns $KEY_COLUMNS \
-    --dataset_type $DATASET_TYPE
-```
-
-## View metadata
-
-To view the current metadata, run the below command:
-
-~~~
-DATABASE_DIR="./tmp" ;
-python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT showmeta \
-    --database_dir $DATABASE_DIR
-~~~
-
 ## Querying the dataset
+
+For these examples the contents of the
+`./examples/common/example_datasets` directory are used. This directory
+contains a pair of pre-generated databases, and the metadata dabase used
+to track them.
 
 The dataset created can be queried through the API or through the
 command line. The below examples will use the command line interface.
@@ -277,26 +176,22 @@ see the [geospatial README](/docs/README-geospatial.md).
 
 ### Data by Radius
 
-This query will retrieve temperature data within a 200km radius of
+This query will retrieve temperature data within a 50km radius of
 Berlin, Germany. All hexes in the h3 grid that have their center point
 fall within this radius will have their data returned.
 
 ~~~
-DATASET="giss_temperature_2022_12_example"
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany"
 LATITUDE=52.518 ;
 LONGITUDE=13.405 ;
-RESOLUTION=5 ;
-RADIUS=200 ;
-YEAR=2022 ;
-MONTH=12 ;
+RESOLUTION=7 ;
+RADIUS=20 ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
     --radius $RADIUS \
-    --resolution $RESOLUTION \
-    --year $YEAR \
-    --month $MONTH
+    --resolution $RESOLUTION 
 ~~~
 
 ### Data by Shapefile
@@ -305,59 +200,15 @@ This example uses a shapefile to return only data for hexagons
 within the bounds of Germany.
 
 ~~~
-DATASET="giss_temperature_2022_12_example" ;
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany" ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
-RESOLUTION=3 ;
+RESOLUTION=7 ;
 REGION="Germany" ;
-YEAR=2022 ;
-MONTH=12 ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
-    --resolution $RESOLUTION \
-    --year $YEAR \
-    --month $MONTH
-~~~
-
-### Visualize dataset
-
-This command will generate a visualization of the temperature data, using
-a red color scale, over the Germany. The visualization can be seen by
-loading the output file (`./tmp/giss_temperature_dec_2022_6_Germany.html`) in
-a web browser.
-
-~~~
-DATABASE_DIR="./tmp" ;
-DATASET="giss_temperature_2022_12_example" ;
-RESOLUTION=6 ;
-VALUE_COLUMN="temperature" ;
-RED=255 ;
-GREEN=0 ;
-BLUE=0 ;
-OUTPUT_FILE="./tmp/giss_temperature_dec_2022_6_Germany.html" ;
-MIN_LAT=46 ;
-MAX_LAT=56 ;
-MIN_LONG=4 ;
-MAX_LONG=17 ;
-THRESHOLD=0.02 ;
-YEAR=2022 ;
-MONTH=12 ;
-
-python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
---database-dir $DATABASE_DIR \
---dataset $DATASET \
---resolution $RESOLUTION \
---value-column $VALUE_COLUMN \
---max-color $RED $GREEN $BLUE \
---output-file $OUTPUT_FILE \
---min-lat $MIN_LAT \
---max-lat $MAX_LAT \
---min-long $MIN_LONG \
---max-long $MAX_LONG \
---threshold $THRESHOLD \
---year $YEAR \
---month $MONTH
+    --resolution $RESOLUTION 
 ~~~
 
 [os-geo-h3loader-cli]: https://github.com/os-climate/osc-geo-h3loader-cli
