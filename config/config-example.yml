@@ -1,4 +1,4 @@
 host: 0.0.0.0
 port: 8000
 
-database-dir: examples/geospatial/germany_flood_datasets
+database-dir: examples/common/example_datasets

@@ -7,15 +7,10 @@
 
 # osc-geo-h3grid-srv - Service for Geospatial Temporal Data Mesh
 
-Experimental geospatial temporal data mesh that uses
-H3 (from Uber) cells to create a uniform mesh of regions
-of varying resolutions for the globe.
-
-Capabilities include:
-- loading geospatial data
-- interpolating latitude/longitude data to map into H3 cells
-of varying resolution.
-- managing shapefiles
+The h3 server is a server designed to allow access to geospatial indices
+constructed by the [osc-geo-h3loader-cli][1] repository. These indices use
+the H3 mesh developed by Uber to create a uniform grid useful for indexing 
+and comparing data from many different datasets.  
 
 The Ecosystem Platform was originally developed by Broda Group Software
 with key contributions by:
@@ -78,11 +73,9 @@ the below documentation.
 This repo offers a command language interface (CLI) to demonstrate
 this functionality:
 - [Geospatial](/docs/README-geospatial.md): Query information in the Geospatial Data Mesh
-- [Data Loading](/docs/README-loading.md): Interpolate sparse data into H3 cell grid
 - [Shapefile](/docs/README-shapefile.md): Shapefile simplification, statistics, and viewing
 - [Repository](/docs/README-repository.md): Shapefile registration and inventory management
-- [End-to-End Examples](/docs/README-example.md): Examples of datasets taken from loading to visualization
-
+- 
 ## Running tests
 
 (You may need to install pytest)
@@ -102,3 +95,5 @@ one and three words if possibble.
 ## Roadmap
 
 For information on planned features, see the [roadmap](/docs/roadmap.md)
+
+[1]: https://github.com/os-climate/osc-geo-h3loader-cli

@@ -78,58 +78,19 @@ data
         |-- world-adminstrative-boundaries.shx
 ~~~
 
-## Geospatial Data
-
-The GISS temperature dataset contains data on global temperatures,
-and is used as the raw data for the examples in this README. It is used as sample
-data for some of the below examples. It can be retrieved from the below links:
-
-GISS Temperature:
-- [v4.mean_GISS_homogenized.txt]
-- [stations.txt]
-
-These were retrieved from this parent site: 
-https://data.giss.nasa.gov/gistemp/station_data_v4_globe/
-
-Create the `data/geo_data/temperatures` directory using the
-below command (if it does not already exist):
-
-~~~
-mkdir -p data/geo_data/temperatures
-~~~
-
-Copy both the `v4.mean_GISS_homogenized.txt` and `stations.txt` to the
-`data/geo_data/temperatures` directory.
-
-See the [os-geo-h3loader-cli] repository for instructions on turning this 
-data into a geomesh dataset.
-
-### Starting the server
-
-The server can be started with the below command. Note that
-the environment and vactivate scripts must be run prior.
-
-~~~
-./bin/start.sh --configuration ./config/config-example.yml
-~~~
-
 ## Dataset types
 
-There are two types of dataset supported by the geospatial server, and each
-has slightly different interactions with endpoints.
-
-The first type of dataset is a continuous or h3 dataset. This is a dataset where data
-is interpolated between known values to generate a distribution with
-values on hexes that do not contain data points themselves, but that
-have data points nearby them. This can be useful for information like
-temperature data, where the underlying distribution varies continuously,
-and nearby data can be used to predict intermediate values without large errors.
+The first type of dataset is an h3 dataset. This is a dataset where data
+is indexed by h3 cell at some resolution. This may be through the aggregation
+of a dataset with higher resolution (generating an h3 index), or through
+the interpolation of sparse data to fill in blank spots. This sort of dataset
+has the advantage of having a uniform grid, allowing easy comparison between 
+datasets. 
 
 The second type of dataset is a point dataset. This is a dataset where
 data is stored as a raw collection of points, without interpolation. This
-can be useful for datasets like asset locations, where data does not vary
-continuously between points, and knowing nearby points cannot be used to
-predict values as unknown points.
+can be useful for datasets like asset locations that need the exact
+position recorded. 
 
 ## Command Line Interpreter (CLI)
 
@@ -144,7 +105,7 @@ usage: cli_geospatial.py [-h] [--verbose] --host HOST --port PORT
 Data Mesh Agent Command Line Interface (CLI)
 
 positional arguments:
-  {addmeta,showmeta,filter,visualize,visualize-dataset,initialize,show}
+  {addmeta,showmeta,filter,filter-assets,visualize,visualize-dataset,initialize,show}
                         Available commands
     addmeta             Add a metadata entry, allowing a dataset to be accessed
     showmeta            show available meta entries
@@ -161,6 +122,7 @@ options:
   --port PORT           Server port
 ~~~~
 
+This CLI exists as a tool that will assemble requests and kill the 
 
 ### Get Data by Latitude & Longitude / Radius
 
@@ -169,23 +131,25 @@ retrieve data for all h3 cells within a specified radius of a
 central point. If using this endpoint this point is specified
 by its latitude and longitude.
 
+In order to run the examples in this section the server must be started
+with the below command
+~~~
+./bin/start.sh --configuration ./config/config-example.yml
+~~~
+
 #### Continuous dataset
 ~~~
-DATASET="giss_temperature_dec_2022"
-LATITUDE=43.856 ;
-LONGITUDE=-79.059 ;
-RESOLUTION=3 ;
-RADIUS=200 ;
-YEAR=2022 ;
-MONTH=12 ;
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany"
+LATITUDE=52.518 ;
+LONGITUDE=13.405 ;
+RESOLUTION=7 ;
+RADIUS=20 ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
     --radius $RADIUS \
-    --resolution $RESOLUTION \
-    --year $YEAR \
-    --month $MONTH
+    --resolution $RESOLUTION 
 ~~~
 
 #### Point dataset
@@ -203,7 +167,7 @@ python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
 	--type $TYPE
 ~~~
 
-### Get Data by Latitude & Longitude Point
+### Get Data by Cell Containing a Point
 
 Another offered service is to retrieves data for the
 h3 cell that includes the specified latitude and longitude.
@@ -211,19 +175,15 @@ This endpoint exists solely for continuous datasets,
 with no equivalent endpoint for point datasets.
 
 ~~~
-DATASET="giss_temperature_dec_2022" ;
-LATITUDE=43.856 ;
-LONGITUDE=-79.059 ;
-RESOLUTION=3 ;
-YEAR=2022 ;
-MONTH=12 ;
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany" ;
+LATITUDE=52.518 ;
+LONGITUDE=13.405 ;
+RESOLUTION=7 ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --latitude $LATITUDE \
     --longitude $LONGITUDE \
-    --resolution $RESOLUTION \
-    --year $YEAR \
-    --month $MONTH
+    --resolution $RESOLUTION 
 ~~~
 
 ### Get Data by Cell / Radius
@@ -234,23 +194,16 @@ by the cell's ID in the h3 grid.
 
 #### Continuous Datasets
 ~~~
-DATASET="giss_temperature_dec_2022" ;
-CELL="832b9bfffffffff" ;
-RADIUS=200 ;
-YEAR=2022 ;
-MONTH=12 ;
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany" ;
+CELL="871f1d489ffffff" ;
+RADIUS=20 ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell "$CELL" \
-    --radius $RADIUS \
-    --year $YEAR \
-    --month $MONTH
+    --radius $RADIUS 
 ~~~
 
 #### Point datasets
-
-To set up the data for the below example run the "Jamaica Buildings" example
-in [README-loading.md](/docs/README-loading.md)
 
 ~~~
 DATASET="jamaica_buildings" ;
@@ -273,15 +226,11 @@ all values within the bounds of the specified cell.
 
 #### Continuous Datasets
 ~~~
-DATASET="giss_temperature_dec_2022" ;
-CELL="832b9bfffffffff" ;
-YEAR=2022 ;
-MONTH=12 ;
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany" ;
+CELL="871f1d489ffffff" ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
-    --cell "$CELL" \
-    --year $YEAR \
-    --month $MONTH
+    --cell "$CELL" 
 ~~~
 
 #### Point Datasets
@@ -292,7 +241,6 @@ TYPE=point ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --cell $CELL \
-    --radius $RADIUS \
 	--type $TYPE
 ~~~
 
@@ -307,19 +255,15 @@ a part of the region to retrieve data for.
 
 #### Continuous Dataset
 ~~~
-DATASET="giss_temperature_dec_2022"
+DATASET="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany" ;
 SHAPEFILE="./data/shapefiles/WORLD/world-administrative-boundaries.shp" ;
-RESOLUTION=3 ;
-REGION="Canada" ;
-YEAR=2022 ;
-MONTH=12 ;
+RESOLUTION=7 ;
+REGION="Germany" ;
 python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT show \
     --dataset $DATASET \
     --shapefile $SHAPEFILE \
     --region $REGION \
-    --resolution $RESOLUTION \
-    --year $YEAR \
-    --month $MONTH
+    --resolution $RESOLUTION 
 ~~~
 
 #### Point Dataset
@@ -364,6 +308,28 @@ python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter \
     > ./samples/cells-WORLD-$RESOLUTION.json
 ~~~~
 
+### Filtering assets based on datasets
+
+The server can be used to filter a list of assets based the values in
+h3 cells of specified datasets. 
+The cell containing each asset will be calculated, and assets 
+will only be returned if the specified conditions are true on the corresponding
+cells in the datasets.
+
+When using the CLI rather than the API endpoint, assets and datasets
+are provided as json files. The format of these files is the same as
+the json that would be provided in the relevant part of the post request
+payload. 
+
+~~~~
+ASSET_FILE="./examples/geospatial/filter-assets/germany_5_assets.json" ;
+DATASET_FILE="./examples/geospatial/filter-assets/germany_datasets.json" ;
+
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter-assets \
+--asset-file $ASSET_FILE \
+--dataset-file $DATASET_FILE
+~~~~
+
 ### Visualize Cells
 
 The `visualize` command takes H3 cells output by the above
@@ -378,93 +344,12 @@ python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize 
     --map_path $MAP_PATH
 ~~~~
 
-### Visualize Dataset
-
-The `visualize-dataset` command allows a visual display of a numerical dataset
-to be displayed on a map. It will generate an output html file that can be viewed
-to see the visualization. Colour scale will vary linearly between the max and min value
-in the dataset, with the maximum color value set in the max-color argument.
-
-A settable threshold exists, and the visualization will not draw parts
-of the grid that fall below a threshold value. Threshold is
-calculated as min + ((max - min) * threshold), and any values below this will not be displayed.
-Setting a threshold allows for faster generation of visualization, especially
-when there are large chunks of data with minimum or near-minimum values that
-do not meaningfully affect the information the visualization is trying to convey.
-
-~~~
-DATABASE_DIR="./tmp" ;
-DATASET="flood_data" ;
-RESOLUTION=6 ;
-VALUE_COLUMN="value" ;
-RED=0 ;
-GREEN=0 ;
-BLUE=255 ;
-OUTPUT_FILE="./tmp/visualize_flood_germany_6_10%_threshold_map_bounds.html" ;
-MIN_LAT=46.5 ;
-MAX_LAT=55.5 ;
-MIN_LONG=4.5 ;
-MAX_LONG=16.5 ;
-THRESHOLD=0.1 ;
-
-python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
---database-dir $DATABASE_DIR \
---dataset $DATASET \
---resolution $RESOLUTION \
---value-column $VALUE_COLUMN \
---max-color $RED $GREEN $BLUE \
---output-file $OUTPUT_FILE \
---min-lat $MIN_LAT \
---max-lat $MAX_LAT \
---min-long $MIN_LONG \
---max-long $MAX_LONG \
---threshold $THRESHOLD
-~~~
-
-
-#### Visualizing point datasets
-
-In order to visualize point datasets, the `ds-type` parameter will need
-to be supplied, and set to "point". This will calculate a visualization by
-taking the mean value of all points that fall within an h3 cell, at the
-appropriate resolution.
-
-~~~
-DATABASE_DIR="./tmp" ;
-DATASET="flood_data" ;
-RESOLUTION=6 ;
-VALUE_COLUMN="value" ;
-RED=0 ;
-GREEN=0 ;
-BLUE=255 ;
-OUTPUT_FILE="./tmp/visualize_flood_germany_6_10%_threshold_map_bounds.html" ;
-MIN_LAT=46.5 ;
-MAX_LAT=55.5 ;
-MIN_LONG=4.5 ;
-MAX_LONG=16.5 ;
-THRESHOLD=0.1 ;
-DS_TYPE="point" ;
-
-python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT visualize-dataset \
---database-dir $DATABASE_DIR \
---dataset $DATASET \
---resolution $RESOLUTION \
---value-column $VALUE_COLUMN \
---max-color $RED $GREEN $BLUE \
---output-file $OUTPUT_FILE \
---min-lat $MIN_LAT \
---max-lat $MAX_LAT \
---min-long $MIN_LONG \
---max-long $MAX_LONG \
---threshold $THRESHOLD \
---ds-type $DS_TYPE
-~~~
-
-
 ### Add Dataset to Metadata
 
 In order to retrieve information from a dataset, that dataset's metadata
-must be created. Use the `addmeta` command to add this metadata.
+must be created. Use the `addmeta` command to add this metadata. Note that
+typically metadata generation will be handled by the [os-geo-h3loader-cli]
+library that is used to generate these datasets.
 
 ~~~
 DATABASE_DIR="./tmp" ;
@@ -579,6 +464,47 @@ Arguments required
 | month      | int   | The month to retrieve data for. must be an integer between 1 and 12. Optional Parameter. |
 | day        | int   | The day to retrieve data for. must be an integer between 1 and 31. Optional parameter.   |
 
+
+#### Filtering assets
+
+The server can be used to filter a list of assets based the values in
+h3 cells of specified datasets. 
+The cell containing each asset will be calculated, and assets 
+will only be returned if the specified conditions are true on the corresponding
+cells in the datasets.
+
+##### Top level args
+
+| Arg name | Type               | Description                                                                                               |
+|----------|--------------------|-----------------------------------------------------------------------------------------------------------|
+| assets   | List[LocatedAsset] | A list containing the assets that are to be filtered                                                      |
+| datasets | List[DatasetArg]   | A list containing information on what datasets the filters will run against, and what those filters are   |
+
+##### LocatedAsset
+Located asset is a complex type having the below structure  
+
+| Arg name    | Type  | Description                                          |
+|-------------|-------|------------------------------------------------------|
+| id          | str   | id of this asset. Must be unique within this request |
+| latitude    | float | The latitude of this asset                           |
+| longitude   | float | The longitude of this asset                          |
+
+##### DatasetArg
+DatasetArg is a complex type with the below structure
+
+| Arg name | Type              | Description                                             |
+|----------|-------------------|---------------------------------------------------------|
+| name     | str               | The name of the dataset                                 |
+| filters  | List[AssetFilter] | A list of the filters that should alloy to this dataset |
+
+##### AssetFilter
+AssetFilter is a complex type with the below structure
+
+| Arg name       | Type  | Description                                                                                                                       |
+|----------------|-------|-----------------------------------------------------------------------------------------------------------------------------------|
+| column         | str   | The column to be filtered on                                                                                                      |
+| filter_type    | str   | The type of filter to perform.<br>Valid values:[greater_than, greater_than_or_equal, lesser_than, lesser_than_or_equal, equal_to] |
+| target_value   | float | The target value to use in the filter comparison                                                                                  | 
 
 [world-administrative-boundaries.zip]: https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/world-administrative-boundaries/exports/shp?lang=en&timezone=America%2FNew_York
 [v4.mean_GISS_homogenized.txt]: https://data.giss.nasa.gov/gistemp/station_data_v4_globe/v4.mean_GISS_homogenized.txt.gz
