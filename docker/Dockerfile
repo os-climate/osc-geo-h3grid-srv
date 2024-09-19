@@ -24,4 +24,4 @@ ENV PORT=8000
 ENV HOST="localhost"
 
 # Set the command to run the app
-CMD [ "python3", "/app/src/server.py"]
+CMD [ "python3", "/app/src/geoserver/server.py", "--configuration", "/app/config/config_docker.yml"]

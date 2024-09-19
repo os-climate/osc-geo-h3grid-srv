@@ -79,10 +79,12 @@ the image will have when published.
 $PROJECT_DIR/bin/dockerize.sh --publish [false|custom|dockerhub] [--latest] [--version <version>]
 ```
 
-To run this image use the following command
+To run this image use the following command, which will run
+and start the server, pulling configuration values from the 
+`$PROJECT_DIR/config/config_docker.yml` file.
 
 ```
-./bin/startd.sh 0 config.yml
+./bin/startd.sh 0
 ```
 
 Note that if using docker mode, some CLI calls must be made from

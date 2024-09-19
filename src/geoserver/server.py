@@ -44,7 +44,9 @@ if __name__ == "__main__":
     parser.add_argument("--configuration", default=DEFAULT_CONFIG,
                         help=f"Configuration file (default: {DEFAULT_CONFIG})")
 
+
     args = parser.parse_args()
+    logger.info(f"using config file {args.configuration}")
 
     logger.info(f"Running with args: {args}")
 
