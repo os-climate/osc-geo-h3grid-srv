@@ -22,11 +22,10 @@ $PROJECT_DIR/bin/show.sh
 usage() {
     echo " "
     echo "Error: $1"
-    echo "Usage: startd.sh <INSTANCE> <CONFIG_FILE>"
+    echo "Usage: startd.sh <INSTANCE>"
     echo "  where INSTANCE is any positive number"
-    echo "  and   CONFIG_FILE is the config file within '/config' containing the configuration of this server"
     echo " "
-    echo "Example: startd.sh 0 my_conf.yml"
+    echo "Example: startd.sh 0"
     echo " "
 }
 
@@ -42,10 +41,6 @@ if [ -z "$1" ] || ! [[ "$1" =~ ^[0-9]+$ ]] || [ "$1" -lt 0 ]; then
 fi
 INSTANCE=$1
 
-if [ -z "$2" ]; then
-    usage "Mandatory parameter CONFIG_FILE must be provided."
-    exit 1
-fi
 export CONFIG_FILE="$2"
 
 export IMAGE_NAME="osc-geo-h3grid-srv"
@@ -60,7 +55,6 @@ echo "IMAGE_NAME:   $IMAGE_NAME    <--- This is the docker image name"
 echo "HOSTNAME:     $HOSTNAME      <--- This is the hostname running in docker"
 echo "PUBLIC_PORT:  $PUBLIC_PORT   <--- This is the port to communicate with this data product"
 echo "PRIVATE_PORT: $PRIVATE_PORT  <--- This is the internal port, which is not used"
-echo "CONFIG_FILE:  $CONFIG_FILE   <--- This is data product configuration in the '/app/config' directory"
 echo " "
 
 NETWORK_NAME="localnet"

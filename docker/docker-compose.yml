@@ -3,7 +3,7 @@ services:
 
     # Data Product
     osc-geo-h3grid-srv:
-        image: ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+        image: ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
         hostname: ${HOSTNAME}
         # container_name: ${HOSTNAME}
         ports:
