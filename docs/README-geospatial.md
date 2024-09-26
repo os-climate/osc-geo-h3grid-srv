@@ -330,6 +330,36 @@ python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter-ass
 --dataset-file $DATASET_FILE
 ~~~~
 
+#### Filtering larger datasets
+
+This example works in the same manner as above, except that rather than
+having a trivially small dataset as an example, it works on an asset file with
+1 million records.
+
+step 1 is to unzip the source data
+
+~~~~bash
+unzip ./examples/geospatial/filter-assets/germany_1_m_generated_assets.zip \
+-d ./examples/geospatial/filter-assets/
+~~~~
+
+Then run the filter assets command line, which will print a short subset of
+the returned rows to console. Control the number of rows returned with the
+RETURN_ROWS parameter. Note that printing a large number of rows will
+rapidly fill console space.
+
+~~~~bash
+ASSET_FILE="./examples/geospatial/filter-assets/germany_1_m_generated_assets.json" ;
+DATASET_FILE="./examples/geospatial/filter-assets/europe_one_dataset.json" ;
+RETURN_ROWS=2
+
+python ./src/cli/cli_geospatial.py $VERBOSE --host $HOST --port $PORT filter-assets \
+--asset-file $ASSET_FILE \
+--dataset-file $DATASET_FILE \
+--return-rows $RETURN_ROWS
+~~~~
+
+
 ### Visualize Cells
 
 The `visualize` command takes H3 cells output by the above
@@ -483,11 +513,11 @@ cells in the datasets.
 ##### LocatedAsset
 Located asset is a complex type having the below structure  
 
-| Arg name    | Type  | Description                                          |
-|-------------|-------|------------------------------------------------------|
-| id          | str   | id of this asset. Must be unique within this request |
-| latitude    | float | The latitude of this asset                           |
-| longitude   | float | The longitude of this asset                          |
+| Arg name | Type  | Description                                          |
+|----------|-------|------------------------------------------------------|
+| id       | str   | id of this asset. Must be unique within this request |
+| lat      | float | The latitude of this asset                           |
+| long     | float | The longitude of this asset                          |
 
 ##### DatasetArg
 DatasetArg is a complex type with the below structure

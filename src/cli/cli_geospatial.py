@@ -203,9 +203,29 @@ def filter_assets(args: argparse.Namespace):
         "port": int(args.port)
     })
 
-    output = cliexec.filter_assets(args.asset_file, args.dataset_file)
-    out_str = json.dumps(output, indent=2, ensure_ascii=False)
-    return out_str
+    output = cliexec.filter_assets(
+        args.asset_file,
+        args.dataset_file
+    )
+
+    logger.info(f"{len(output['data'])} rows returned")
+
+    cols = output["columns"]
+    outstr = "columns: " + json.dumps(cols, ensure_ascii=False)
+    data = output["data"]
+    outstr += "\n\n"
+
+    num_rows = args.return_rows
+    if num_rows > 0:
+        num_rows_str = f"{num_rows}"
+        data_to_show = data[0:args.return_rows + 1]
+    else:
+        num_rows_str = "all"
+        data_to_show = data
+
+    outstr += f"data (showing {num_rows_str} rows):" +\
+              json.dumps(data_to_show, ensure_ascii=False)
+    return outstr
 
 def visualize(parser: argparse.ArgumentParser):
     args = parser.parse_args()
@@ -400,6 +420,11 @@ def add_filter_assets_parser(
         "--asset-file", required=True, help="Path to asset file")
     f_asset_parser.add_argument(
         "--dataset-file", required=True, help="Path to dataset file")
+    f_asset_parser.add_argument(
+        "--return-rows", required=False, type=int,
+        default=2, help="How many rows of the result to return."
+                        " Defaults to 2."
+                        " To return all rows set to -1")
 
 def add_visualize_parser(
     subparsers

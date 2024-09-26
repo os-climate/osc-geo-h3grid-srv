@@ -45,7 +45,8 @@ class TestGeomeshCliIntegration:
             "--port", PORT,
             "filter-assets",
             "--asset-file", assets_file,
-            "--dataset-file", datasets_file
+            "--dataset-file", datasets_file,
+            "--return-rows", "-1"
         ])
         assert "Bremen" in out
         assert "Brunsbüttel" in out

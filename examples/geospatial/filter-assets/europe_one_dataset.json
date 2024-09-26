@@ -1,0 +1,12 @@
+[
+  {
+    "name": "tu_delft_river_flood_depth_1971_2000_hist_0010y_europe",
+    "filters": [
+      {
+        "column": "flood_risk_max",
+        "filter_type": "greater_than",
+        "target_value": 7
+      }
+    ]
+  }
+]

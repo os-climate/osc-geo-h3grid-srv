@@ -61,14 +61,14 @@ class Correlator:
 
         asset_for_insertion = []
         for asset in assets:
-            all_h3_cells = self._cells(asset.latitude, asset.longitude)
+            all_h3_cells = self._cells(asset.lat, asset.long)
             all_h3_cells = {CELL_COL_PREFIX + str(index): value for
                             index, value in enumerate(all_h3_cells)}
             asset_for_insertion.append(
                 {
                     **all_h3_cells,
-                    "latitude": asset.latitude,
-                    "longitude": asset.longitude,
+                    "latitude": asset.lat,
+                    "longitude": asset.long,
                     "id": asset.id
                 }
             )

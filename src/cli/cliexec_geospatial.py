@@ -235,7 +235,7 @@ class CliExecGeospatial:
         service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/filter"
         method = "POST"
         response = httputils.httprequest(self.host, self.port, service, method,
-                                         obj=params)
+                                         obj=params, log_full_request=False)
         return response
 
     def add_meta(

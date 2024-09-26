@@ -16,8 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 def httprequest(host: str, port: int, service: str, method: str,
-             data: Optional[Any]=None, obj: Optional[Dict]=None,
-             files: Optional[Any]=None, params: Optional[Dict]=None) -> requests.Response:
+                data: Optional[Any] = None, obj: Optional[Dict] = None,
+                files: Optional[Any] = None, params: Optional[Dict] = None,
+                log_full_request: bool = True
+                ) -> requests.Response:
     """
     Generic request function using the requests library.
     On success, a True boolean is returned.
@@ -33,11 +35,27 @@ def httprequest(host: str, port: int, service: str, method: str,
     - data (any, optional): Data to send in the request body, typically for POST requests
     - obj (dict, optional): JSON object to send in the request body
     - files (any, optional): Files to send in the request body
+    - log_full_request (bool, optional): whether to include the
+        full request object in debug logs, or whether to only include the
+        length of the data and object elements, instead of content. Can be
+        used to prevent excessively large requests from clogging log files,
+        or to prevent sensitive data form being written to logs.
 
     Returns:
     - requests.Response: The response object
     """
-    logger.info(f"Issue request, host:{host} port:{port} method:{method} data:{data} obj:{obj} files:{files} params:{params}")
+    if log_full_request:
+        logger.debug(
+            f"Issue request, host:{host} port:{port} method:{method}"
+            f" data:{data} obj:{obj} files:{files} params:{params}")
+    else:
+        data_length = len(str(data))
+        obj_len = len(str(obj))
+        logger.debug(
+            f"Issue request, host:{host} port:{port} method:{method}"
+            f" data length in characters:{data_length}"
+            f" obj length in characters:{obj_len}"
+            f" files:{files} params:{params}")
 
     response = None
     try:

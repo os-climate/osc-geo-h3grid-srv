@@ -17,3 +17,5 @@ output
 src/temp*.py
 
 demo
+
+examples/geospatial/filter-assets/germany_1_m_generated_assets.json

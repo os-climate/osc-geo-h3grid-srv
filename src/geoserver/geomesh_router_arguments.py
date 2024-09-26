@@ -114,8 +114,8 @@ class LocatedAsset(BaseModel):
     id: str = Field(
         description="id of this asset. Must be unique within this request"
     )
-    latitude: float = Field(description="latitude of this asset")
-    longitude: float = Field(description="longitude of this asset")
+    lat: float = Field(description="latitude of this asset")
+    long: float = Field(description="longitude of this asset")
 
 
 class AssetFilter(BaseModel):
