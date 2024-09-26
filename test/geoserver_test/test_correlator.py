@@ -21,8 +21,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="Berlin",
-                latitude=52.52,
-                longitude=13.40
+                lat=52.52,
+                long=13.40
             ),
         ]
 
@@ -53,8 +53,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="NOT_IN_GERMANY",
-                latitude=0,
-                longitude=0
+                lat=0,
+                long=0
             )
         ]
 
@@ -83,8 +83,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="NOT_IN_GERMANY",
-                latitude=0,
-                longitude=0
+                lat=0,
+                long=0
             )
         ]
 
@@ -115,8 +115,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="Berlin",
-                latitude=52.52,
-                longitude=13.40
+                lat=52.52,
+                long=13.40
                 # flood_risk_min    = 0.177
                 # flood_risk_max    = 7.451
                 # flood_risk_median = 7.131
@@ -124,8 +124,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Frankfurt",
-                latitude=50.11,
-                longitude=8.68
+                lat=50.11,
+                long=8.68
                 # flood_risk_min    = 0.0261
                 # flood_risk_max    = 6.888
                 # flood_risk_median = 5.338
@@ -133,8 +133,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Brunsbüttel",
-                latitude=53.89,
-                longitude=9.13
+                lat=53.89,
+                long=9.13
                 # flood_risk_min    = 0.170
                 # flood_risk_max    = 3.313
                 # flood_risk_median = 1.536
@@ -167,8 +167,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="Berlin",
-                latitude=52.52,
-                longitude=13.40
+                lat=52.52,
+                long=13.40
                 # flood_risk_min    = 0.177
                 # flood_risk_max    = 7.451
                 # flood_risk_median = 7.131
@@ -176,8 +176,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Frankfurt",
-                latitude=50.11,
-                longitude=8.68
+                lat=50.11,
+                long=8.68
                 # flood_risk_min    = 0.0261
                 # flood_risk_max    = 6.888
                 # flood_risk_median = 5.338
@@ -185,8 +185,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Brunsbüttel",
-                latitude=53.89,
-                longitude=9.13
+                lat=53.89,
+                long=9.13
                 # flood_risk_min    = 0.170
                 # flood_risk_max    = 3.313
                 # flood_risk_median = 1.536
@@ -224,8 +224,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="Berlin",
-                latitude=52.52,
-                longitude=13.40
+                lat=52.52,
+                long=13.40
                 # flood_risk_min    = 0.177
                 # flood_risk_max    = 7.451
                 # flood_risk_median = 7.131
@@ -233,8 +233,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Frankfurt",
-                latitude=50.11,
-                longitude=8.68
+                lat=50.11,
+                long=8.68
                 # flood_risk_min    = 0.0261
                 # flood_risk_max    = 6.888
                 # flood_risk_median = 5.338
@@ -242,8 +242,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Brunsbüttel",
-                latitude=53.89,
-                longitude=9.13
+                lat=53.89,
+                long=9.13
                 # flood_risk_min    = 0.170
                 # flood_risk_max    = 3.313
                 # flood_risk_median = 1.536
@@ -279,8 +279,8 @@ class TestCorrelator:
         assets = [
             LocatedAsset(
                 id="Berlin",
-                latitude=52.52,
-                longitude=13.40
+                lat=52.52,
+                long=13.40
                 # flood_risk_min 10y    = 0.177
                 # flood_risk_max 10y    = 7.451
                 # flood_risk_min 1000y  = 0.024
@@ -288,8 +288,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Frankfurt",
-                latitude=50.11,
-                longitude=8.68
+                lat=50.11,
+                long=8.68
                 # flood_risk_min 10y    = 0.0261
                 # flood_risk_max 10y    = 6.888
                 # flood_risk_min 1000y  = 0.0075
@@ -297,8 +297,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Brunsbüttel",
-                latitude=53.89,
-                longitude=9.13
+                lat=53.89,
+                long=9.13
                 # flood_risk_min 10y    = 0.170
                 # flood_risk_max 10y    = 3.313
                 # flood_risk_min 1000y  = 0.138
@@ -307,8 +307,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Bremen",
-                latitude=53.08,
-                longitude=8.803
+                lat=53.08,
+                long=8.803
                 # flood_risk_min 10y    = 0.713
                 # flood_risk_max 10y    = 7.190
                 # flood_risk_min 1000y  = 0.036
@@ -316,8 +316,8 @@ class TestCorrelator:
             ),
             LocatedAsset(
                 id="Cologne",
-                latitude=50.95,
-                longitude=6.95
+                lat=50.95,
+                long=6.95
                 # flood_risk_min 10y    = None
                 # flood_risk_max 10y    = None
                 # flood_risk_min 1000y  = 0.0156
