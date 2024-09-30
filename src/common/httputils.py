@@ -19,7 +19,7 @@ def httprequest(host: str, port: int, service: str, method: str,
                 data: Optional[Any] = None, obj: Optional[Dict] = None,
                 files: Optional[Any] = None, params: Optional[Dict] = None,
                 log_full_request: bool = True
-                ) -> requests.Response:
+                ) -> requests.Response | Dict[str, Any]:
     """
     Generic request function using the requests library.
     On success, a True boolean is returned.
@@ -61,30 +61,45 @@ def httprequest(host: str, port: int, service: str, method: str,
     try:
         url = f"http://{host}:{port}{service}"
         logger.info(f"Using url:{url}")
-        headers = {"Content-Type": "application/json"}
-        logger.info(f"Using headers:{headers}")
 
         # Convert method to uppercase to match HTTP standard
         method = method.upper()
 
-        if method not in ["GET", "POST", "PUT", "DELETE"]:
-            raise ValueError(f"Invalid HTTP method:{method}")
+        # If files are being sent a different header type is required
+        if files:
+            headers = {}  # Leave headers empty, 'requests' will handle 'multipart/form-data'
+        else:
+            headers = {"Content-Type": "application/json"}
 
+        logger.info(f"Using headers: {headers}")
+
+        if method not in ["GET", "POST", "PUT", "DELETE"]:
+            raise ValueError(f"Invalid HTTP method: {method}")
+
+        # Make the appropriate request based on the method
         if method == "GET":
             response = requests.get(url, params=params, headers=headers)
         elif method == "POST":
             if files:
-                response = requests.post(url, data=data, json=obj, files=files, headers=headers)
+                # Send files as part of the multipart form data request
+                response = requests.post(
+                    url, data=data, files=files, headers=headers, params=params)
             else:
-                response = requests.post(url, data=data, json=obj, headers=headers)
+                # Send JSON data
+                response = requests.post(
+                    url, json=obj, data=data, headers=headers, params=params)
         elif method == "PUT":
-            response = requests.put(url, data=data, json=obj, headers=headers)
+            response = requests.put(url, json=obj, data=data, headers=headers, params=params)
         elif method == "DELETE":
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, params=params)
 
         if response.status_code != 200:
             import json
-            text = json.loads(response.text)
+            try:
+                text = json.loads(response.text)
+            except ValueError:
+                text = response.text  # If response is not JSON formatted
+
             msg = f"HTTP error, code:{response.status_code} text:{text} url:{url}"
             logger.error(msg)
             error = {
@@ -98,19 +113,20 @@ def httprequest(host: str, port: int, service: str, method: str,
     except requests.exceptions.ConnectionError as e:
         msg = f"Connection error: {e}"
         logger.error(msg)
-        return { "error": msg }
+        return {"error": msg}
     except requests.exceptions.RequestException as e:
         msg = e.args[0] if e.args else "Unknown request error"
         if response:
             msg += f" text:{response.text}"
         logger.error(msg)
-        return { "error": msg }
+        return {"error": msg}
     except Exception as e:
-        # Any unknown exception will log an error, print to console,
-        # and then exit to the console (ending the program)
+        # Catch any unknown exception, log it, and return the error
         msg = f"Exception: {e}"
         logger.error(msg)
-        return { "error": msg }
+        return {"error": msg}
 
-    response = response.json()
-    return response
+    try:
+        return response.json()
+    except ValueError:
+        return response  # If the response is not JSON, return the raw response object

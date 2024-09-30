@@ -44,10 +44,9 @@ class TestCorrelator:
         for i in range(16):
             assert f"cell_{i}" in all_cols
 
-    def test_include_if_no_match_in_dataset(self):
+    def test_drop_if_no_match_in_dataset(self):
         # If you pass a point outside the geographic region of a dataset
-        # still include it, and let the user handle filtering that on
-        # their end if they need it removed.
+        # do not include it
         correlator = Correlator(test_dir)
 
         assets = [
@@ -72,42 +71,7 @@ class TestCorrelator:
         ]
 
         out = correlator.get_correlated_data(assets=assets, datasets=datasets)
-        assert len(out["data"]) == 1
-
-    def test_no_match_in_dataset_has_null_cols(self):
-        # If you pass a point outside the geographic region of a dataset
-        # still include it, and let the user handle filtering that on
-        # their end if they need it removed.
-        correlator = Correlator(test_dir)
-
-        assets = [
-            LocatedAsset(
-                id="NOT_IN_GERMANY",
-                lat=0,
-                long=0
-            )
-        ]
-
-        datasets = [
-            DatasetArg(
-                name="tu_delft_river_flood_depth_1971_2000_hist_0010y_germany",
-                filters=[
-                    AssetFilter(
-                        column="flood_risk_max",
-                        filter_type="greater_than",
-                        target_value=-0.1  # should return every point
-                    )
-                ]
-            )
-        ]
-
-        out = correlator.get_correlated_data(assets=assets, datasets=datasets)
-        out_row = out["data"][0]
-        null_count = 0
-        for col in out_row:
-            if col is None:
-                null_count += 1
-        assert null_count > 1
+        assert len(out["data"]) == 0
 
     def test_filter_works_with_one_filter(self):
         correlator = Correlator(test_dir)

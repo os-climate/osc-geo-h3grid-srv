@@ -223,19 +223,31 @@ class CliExecGeospatial:
             assets_file: str,
             datasets_file: str
     ):
+        logger.info(f"Filtering assets using"
+                    f" assets_file:{assets_file}"
+                    f" datasets_file:{datasets_file}" )
+
         with open(assets_file, encoding='utf8') as asset_json_file:
             assets = json.load(asset_json_file)
+        logger.info(f"Loaded assets had {len(assets)} entries")
+
         with open(datasets_file, encoding='utf8') as dataset_json_file:
             datasets = json.load(dataset_json_file)
+        logger.info(f"Loaded datasets had {len(datasets)} entries")
 
-        params = {
-            "assets": assets,
-            "datasets": datasets
-        }
         service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/filter"
         method = "POST"
+
+        files = {
+            "assets_file": (assets_file, open(assets_file, "rb"),
+                            "application/json"),
+            'datasets_file': (datasets_file, open(datasets_file, "rb"),
+                              "application/json")
+        }
+        logger.info("Sending request")
         response = httputils.httprequest(self.host, self.port, service, method,
-                                         obj=params, log_full_request=False)
+                                         files=files, log_full_request=False)
+        logger.info("Received response")
         return response
 
     def add_meta(
