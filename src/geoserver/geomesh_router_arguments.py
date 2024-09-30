@@ -139,13 +139,3 @@ class DatasetArg(BaseModel):
     filters: List[AssetFilter] = Field(
         description="The filter(s) to apply to this dataset"
     )
-
-
-class FilterArgs(BaseModel):
-    assets: List[LocatedAsset] = Field(
-        description="The assets that to be filtered"
-    )
-    datasets: List[DatasetArg] = Field(
-        description="The datasets that are to be filtered on, and their"
-                    "associated filters."
-    )

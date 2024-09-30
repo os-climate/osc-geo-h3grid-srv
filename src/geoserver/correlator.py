@@ -48,8 +48,9 @@ class Correlator:
             assets: List[LocatedAsset],
             datasets: List[DatasetArg]
     ):
-
+        logger.info(f"Creating temporary assets database")
         asset_db = self._create_asset_db(assets)
+        logger.info(f"Correlating assets")
         results = self._correlate_data(asset_db, datasets)
         logger.info(f"returning {len(results['data'])} rows")
         return results
@@ -59,6 +60,7 @@ class Correlator:
             assets: List[LocatedAsset],
     ) -> DuckDBPyConnection:
 
+        logger.debug(f"Creating assets list")
         asset_for_insertion = []
         for asset in assets:
             all_h3_cells = self._cells(asset.lat, asset.long)
@@ -72,18 +74,25 @@ class Correlator:
                     "id": asset.id
                 }
             )
+
+        logger.debug(f"Creating temporary dataframe")
         temp_df = pandas.DataFrame(asset_for_insertion)
         conn = duckdb.connect(database=':memory:')
+
+        logger.debug(f"Creating table {ASSET_TABLE_NAME}")
         conn.execute(
             f"CREATE TABLE {ASSET_TABLE_NAME} AS SELECT * FROM temp_df")
 
         res_col = f"{CELL_COL_PREFIX}{self.resolution}"
         index_res_column = f"{INDEX_PREFIX}{CELL_COL_PREFIX}_{self.resolution}"
         # Create a non-unique index on the res9 column
+
+        logger.debug(f"Creating index for {ASSET_TABLE_NAME}")
         statement = f"""
             CREATE INDEX {index_res_column} ON {ASSET_TABLE_NAME} ({res_col})
         """
         conn.execute(statement)
+
         return conn
 
     def _cells(self, latitude, longitude) -> List[str]:
@@ -98,12 +107,17 @@ class Correlator:
             asset_db: DuckDBPyConnection,
             datasets: List[DatasetArg]
     ) -> Dict:  # TODO: better return type
+
+        logger.debug(f"Correlating data")
         filter_strings = []
         filter_vals = []
         db_tables = []
         target_vals = []
         for dataset in datasets:
+            logger.debug(f"Using dataset:{dataset}")
             db_path = self._get_database_path(dataset.name)
+            logger.debug(f"Using db_path:{db_path}")
+
             conn = duckdb.connect(db_path)
             table_name = self._get_table_from_dataset(dataset.name)
             if not duckdbutils.duckdb_check_table_exists(conn, table_name):
@@ -122,24 +136,29 @@ class Correlator:
 
         full_filter = self._assemble_full_where(filter_strings)
 
-
         for dataset in datasets:
             db_path = self._get_database_path(dataset.name)
             self.attach_database(asset_db, dataset.name, db_path)
 
+        logger.info(f"Assembling correlation"
+                    f" resolution: {self.resolution}"
+                    f" db_tables:{db_tables}")
         full_sql = self._assemble_correlation_query(
             self.resolution,
             db_tables,
             full_filter
         )
 
+        logger.info(f"Executing correlation SQL")
         result_obj = asset_db.execute(full_sql, target_vals)
         result_description = result_obj.description
         result_columns = list(map(
             lambda tup: tup[0],
             result_description
         ))
+        logger.info(f"fetching all...")
         results_raw = result_obj.fetchall()
+        logger.info(f"fetching all... DONE")
 
         return self._output_to_json(results_raw, result_columns)
 
@@ -222,7 +241,7 @@ class Correlator:
 
         for db_table in db_tables:
             table_only = db_table.split(".")[1]
-            sql += f"LEFT JOIN {db_table} AS {table_only} " \
+            sql += f"JOIN {db_table} AS {table_only} " \
                    f"ON {ASSET_TABLE_NAME}.{asset_cell_col} = " \
                    f"{table_only}.{const.CELL_COL} "
 

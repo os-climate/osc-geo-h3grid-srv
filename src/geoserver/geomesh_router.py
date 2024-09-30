@@ -8,14 +8,14 @@
 from typing import Optional, Dict, List
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel, Field
 
 from geoserver.geomesh import Geomesh, CellDataRow
 from .correlator import Correlator
-from .geomesh_router_arguments import FilterArgs, GeomeshShapefileArgs, \
+from .geomesh_router_arguments import GeomeshShapefileArgs, \
     GeomeshCellPointArgs, GeomeshLatLongRadiusArgs, GeomeshLatLongPointArgs, \
-    GeomeshCellRadiusArgs
+    GeomeshCellRadiusArgs, LocatedAsset, DatasetArg
 from .route_constants import API_PREFIX
 from . import state
 
@@ -186,22 +186,48 @@ async def geomesh_shapefile(
 
 
 @router.post(GEO_ENDPOINT_PREFIX + "/filter")
-async def filter_assets(
-        params: FilterArgs
-):
-    assets = params.assets
-    datasets = params.datasets
-    if len(assets) == 0:
-        raise ValueError("assets was empty")
-    if len(datasets) == 0:
-        raise ValueError("datasets was empty")
+async def filter(
+        assets_file: UploadFile,
+        datasets_file: UploadFile):
+
+    logger.info(f"filter assets_file:{assets_file} datasets_file:{datasets_file}")
+
+    # Ensure both files are JSON
+    if assets_file.content_type != "application/json":
+        raise HTTPException(status_code=400, detail="Asset file must be JSON")
+
+    if datasets_file.content_type != "application/json":
+        raise HTTPException(status_code=400, detail="Datasets file must be JSON")
 
     try:
+        # Read and parse the JSON files
+        import json
+        assets_content = await assets_file.read()
+        logger.info(f"assets_content:{preview_string(assets_content)}")
+        assets = json.loads(assets_content)
+        located_assets = [LocatedAsset(**asset) for asset in assets]
+
+        datasets_content = await datasets_file.read()
+        logger.info(f"datasets_content:{preview_string(datasets_content)}")
+        datasets = json.loads(datasets_content)
+        dataset_args = [DatasetArg(**dataset) for dataset in datasets]
+
         db_dir = state.get_global("database_dir")
         correlator = Correlator(db_dir)
-        results = correlator.get_correlated_data(assets, datasets)
+        results = correlator.get_correlated_data(located_assets, dataset_args)
         return results
+
     except Exception as e:
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
+def preview_string(long_string: str, preview_length: int=1000) -> str:
+    total_length = len(long_string)
+    # If the string is shorter than or equal to preview_length, return it as is.
+    # Otherwise show subset of characters
+    if total_length <= preview_length:
+        return long_string
+    else:
+        preview = long_string[:preview_length]
+        return f"{preview}... (showing {preview_length} of {total_length} total characters)"

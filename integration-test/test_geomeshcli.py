@@ -50,6 +50,6 @@ class TestGeomeshCliIntegration:
         ])
         assert "Bremen" in out
         assert "Brunsbüttel" in out
-        assert "Cologne" in out
+        assert "Cologne" not in out
         assert "Frankfurt" not in out
         assert "Berlin" not in out
