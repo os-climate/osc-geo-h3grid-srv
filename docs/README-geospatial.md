@@ -349,7 +349,7 @@ RETURN_ROWS parameter. Note that printing a large number of rows will
 rapidly fill console space.
 
 ~~~~bash
-ASSET_FILE="./examples/geospatial/filter-assets/germany_1_m_generated_assets.json" ;
+ASSET_FILE="./examples/geospatial/filter-assets/germany_1_m_generated_assets.parquet" ;
 DATASET_FILE="./examples/geospatial/filter-assets/europe_one_dataset.json" ;
 RETURN_ROWS=2
 
@@ -505,22 +505,15 @@ cells in the datasets.
 
 ##### Top level args
 
-| Arg name | Type               | Description                                                                                               |
-|----------|--------------------|-----------------------------------------------------------------------------------------------------------|
-| assets   | List[LocatedAsset] | A list containing the assets that are to be filtered                                                      |
-| datasets | List[DatasetArg]   | A list containing information on what datasets the filters will run against, and what those filters are   |
+| Arg name | Type         | Description                                                           |
+|----------|--------------|-----------------------------------------------------------------------|
+| assets   | Parquet File | A Parquet file containing assets. Must contain columns: id, lat, long |
+| datasets | JSON FILE    | A file containing the dataset information                             |
 
-##### LocatedAsset
-Located asset is a complex type having the below structure  
 
-| Arg name | Type  | Description                                          |
-|----------|-------|------------------------------------------------------|
-| id       | str   | id of this asset. Must be unique within this request |
-| lat      | float | The latitude of this asset                           |
-| long     | float | The longitude of this asset                          |
-
-##### DatasetArg
-DatasetArg is a complex type with the below structure
+##### Dataset File structure
+The dataset file should contain a JSON list, where each element
+in that list is an object with the below fields:
 
 | Arg name | Type              | Description                                             |
 |----------|-------------------|---------------------------------------------------------|

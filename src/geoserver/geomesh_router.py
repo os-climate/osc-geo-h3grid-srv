@@ -5,9 +5,11 @@
 # https://opensource.org/licenses/MIT.
 #
 # Created: 2024-03-27 by davis.broda@brodagroupsoftware.com
+import io
 from typing import Optional, Dict, List
 import logging
 
+import pandas
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel, Field
 
@@ -193,19 +195,21 @@ async def filter(
     logger.info(f"filter assets_file:{assets_file} datasets_file:{datasets_file}")
 
     # Ensure both files are JSON
-    if assets_file.content_type != "application/json":
-        raise HTTPException(status_code=400, detail="Asset file must be JSON")
+    if assets_file.content_type != "application/octet-stream":
+        raise HTTPException(status_code=400,
+                            detail="Asset file must be octet-stream")
 
     if datasets_file.content_type != "application/json":
-        raise HTTPException(status_code=400, detail="Datasets file must be JSON")
+        raise HTTPException(status_code=400,
+                            detail="Datasets file must be JSON")
 
     try:
         # Read and parse the JSON files
         import json
         assets_content = await assets_file.read()
-        logger.info(f"assets_content:{preview_string(assets_content)}")
-        assets = json.loads(assets_content)
-        located_assets = [LocatedAsset(**asset) for asset in assets]
+        pq_file = io.BytesIO(assets_content)
+
+        asset_df = pandas.read_parquet(pq_file)
 
         datasets_content = await datasets_file.read()
         logger.info(f"datasets_content:{preview_string(datasets_content)}")
@@ -214,7 +218,7 @@ async def filter(
 
         db_dir = state.get_global("database_dir")
         correlator = Correlator(db_dir)
-        results = correlator.get_correlated_data(located_assets, dataset_args)
+        results = correlator.get_correlated_data(asset_df, dataset_args)
         return results
 
     except Exception as e:
