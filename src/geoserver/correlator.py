@@ -13,6 +13,7 @@ import duckdb
 import h3
 import pandas
 from duckdb import DuckDBPyConnection
+from pandas import DataFrame
 
 from common import const, duckdbutils
 from .geomesh_router_arguments import LocatedAsset, DatasetArg, \
@@ -45,7 +46,7 @@ class Correlator:
 
     def get_correlated_data(
             self,
-            assets: List[LocatedAsset],
+            assets: pandas.DataFrame,
             datasets: List[DatasetArg]
     ):
         logger.info(f"Creating temporary assets database")
@@ -57,31 +58,14 @@ class Correlator:
 
     def _create_asset_db(
             self,
-            assets: List[LocatedAsset],
+            assets: pandas.DataFrame,
     ) -> DuckDBPyConnection:
-
-        logger.debug(f"Creating assets list")
-        asset_for_insertion = []
-        for asset in assets:
-            all_h3_cells = self._cells(asset.lat, asset.long)
-            all_h3_cells = {CELL_COL_PREFIX + str(index): value for
-                            index, value in enumerate(all_h3_cells)}
-            asset_for_insertion.append(
-                {
-                    **all_h3_cells,
-                    "latitude": asset.lat,
-                    "longitude": asset.long,
-                    "id": asset.id
-                }
-            )
-
-        logger.debug(f"Creating temporary dataframe")
-        temp_df = pandas.DataFrame(asset_for_insertion)
+        self._add_cells(assets, [7])
         conn = duckdb.connect(database=':memory:')
 
         logger.debug(f"Creating table {ASSET_TABLE_NAME}")
         conn.execute(
-            f"CREATE TABLE {ASSET_TABLE_NAME} AS SELECT * FROM temp_df")
+            f"CREATE TABLE {ASSET_TABLE_NAME} AS SELECT * FROM assets")
 
         res_col = f"{CELL_COL_PREFIX}{self.resolution}"
         index_res_column = f"{INDEX_PREFIX}{CELL_COL_PREFIX}_{self.resolution}"
@@ -95,12 +79,20 @@ class Correlator:
 
         return conn
 
-    def _cells(self, latitude, longitude) -> List[str]:
-        h3_cells = []
-        for resolution in range(16):
-            h3_cells.append(
-                h3.geo_to_h3(latitude, longitude, resolution))
-        return h3_cells
+    def _add_cells(self, df: pandas.DataFrame,
+                   resolutions: List[int]) -> pandas.DataFrame:
+        logger.info("attaching cells to data")
+        # Extract the latitude and longitude columns once for better performance
+        #  As numpy is much faster than pandas
+        latitudes = df['lat'].to_numpy()
+        longitudes = df['long'].to_numpy()
+        for res in resolutions:
+            df[f"{CELL_COL_PREFIX}{res}"] = [
+                h3.geo_to_h3(lat, lon, res) for lat, lon in
+                zip(latitudes, longitudes)
+            ]
+        logger.info("done attaching cells to data")
+        return df
 
     def _correlate_data(
             self,

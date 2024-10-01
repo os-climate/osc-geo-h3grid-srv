@@ -225,11 +225,7 @@ class CliExecGeospatial:
     ):
         logger.info(f"Filtering assets using"
                     f" assets_file:{assets_file}"
-                    f" datasets_file:{datasets_file}" )
-
-        with open(assets_file, encoding='utf8') as asset_json_file:
-            assets = json.load(asset_json_file)
-        logger.info(f"Loaded assets had {len(assets)} entries")
+                    f" datasets_file:{datasets_file}")
 
         with open(datasets_file, encoding='utf8') as dataset_json_file:
             datasets = json.load(dataset_json_file)
@@ -240,7 +236,7 @@ class CliExecGeospatial:
 
         files = {
             "assets_file": (assets_file, open(assets_file, "rb"),
-                            "application/json"),
+                            "application/octet-stream"),
             'datasets_file': (datasets_file, open(datasets_file, "rb"),
                               "application/json")
         }

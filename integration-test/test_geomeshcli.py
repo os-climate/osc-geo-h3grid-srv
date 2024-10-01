@@ -17,7 +17,7 @@ class TestGeomeshCliIntegration:
 
     def test_filter_multiple_datasets(self):
         assets_file = \
-            "./examples/geospatial/filter-assets/germany_5_assets.json"
+            "./examples/geospatial/filter-assets/germany_5_assets.parquet"
         datasets_file = \
             "./examples/geospatial/filter-assets/germany_datasets.json"
 
@@ -36,7 +36,7 @@ class TestGeomeshCliIntegration:
 
     def test_filter_one_dataset(self):
         assets_file = \
-            "./examples/geospatial/filter-assets/germany_5_assets.json"
+            "./examples/geospatial/filter-assets/germany_5_assets.parquet"
         datasets_file = \
             "./examples/geospatial/filter-assets/germany_one_dataset.json"
 
