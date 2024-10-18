@@ -53,3 +53,15 @@ class TestGeomeshCliIntegration:
         assert "Cologne" not in out
         assert "Frankfurt" not in out
         assert "Berlin" not in out
+
+    def test_metadata_endpoint(self):
+        out = cli_geospatial.execute([
+            "--host", HOST,
+            "--port", PORT,
+            "showmeta"
+        ])
+
+        assert "jamaica_buildings" in out
+        assert "tu_delft_river_flood_depth_1971_2000_hist_0010y_europe" in out
+        assert "tu_delft_river_flood_depth_1971_2000_hist_0010y_germany" in out
+        assert "tu_delft_river_flood_depth_1971_2000_hist_1000y_germany" in out

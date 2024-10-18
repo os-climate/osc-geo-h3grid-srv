@@ -18,6 +18,7 @@ from .correlator import Correlator
 from .geomesh_router_arguments import GeomeshShapefileArgs, \
     GeomeshCellPointArgs, GeomeshLatLongRadiusArgs, GeomeshLatLongPointArgs, \
     GeomeshCellRadiusArgs, LocatedAsset, DatasetArg
+from .metadata import MetadataDB
 from .route_constants import API_PREFIX
 from . import state
 
@@ -191,8 +192,8 @@ async def geomesh_shapefile(
 async def filter(
         assets_file: UploadFile,
         datasets_file: UploadFile):
-
-    logger.info(f"filter assets_file:{assets_file} datasets_file:{datasets_file}")
+    logger.info(
+        f"filter assets_file:{assets_file} datasets_file:{datasets_file}")
 
     # Ensure both files are JSON
     if assets_file.content_type != "application/octet-stream":
@@ -226,7 +227,8 @@ async def filter(
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-def preview_string(long_string: str, preview_length: int=1000) -> str:
+
+def preview_string(long_string: str, preview_length: int = 1000) -> str:
     total_length = len(long_string)
     # If the string is shorter than or equal to preview_length, return it as is.
     # Otherwise show subset of characters
@@ -235,3 +237,12 @@ def preview_string(long_string: str, preview_length: int=1000) -> str:
     else:
         preview = long_string[:preview_length]
         return f"{preview}... (showing {preview_length} of {total_length} total characters)"
+
+
+@router.get(GEO_ENDPOINT_PREFIX + "/showmeta")
+async def get_metadata():
+    logger.info(f"retrieving metadata")
+    db_dir = state.get_global("database_dir")
+    metadata_db = MetadataDB(db_dir)
+    results = metadata_db.show_meta()
+    return results

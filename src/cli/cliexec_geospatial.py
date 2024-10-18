@@ -265,11 +265,16 @@ class CliExecGeospatial:
         )
 
     def show_meta(
-            self,
-            database_dir: str
-    ) -> List[Dict[str, Any]]:
-        meta = metadata.MetadataDB(database_dir)
-        return meta.show_meta()
+            self
+    ):
+        service = f"{geomesh_router.GEO_ENDPOINT_PREFIX}/showmeta"
+        method = "GET"
+
+        logger.info("Sending request")
+        response = httputils.httprequest(self.host, self.port, service, method,
+                                         log_full_request=False)
+        return response
+
 
     def filter(self, shapefile: str, resolution: int, tolerance: float) -> List:
         geomesh = Geomesh(None)

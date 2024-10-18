@@ -76,17 +76,16 @@ def addmeta(parser: argparse.ArgumentParser):
     print(f"Created Metadata Entry for {res}")
 
 
-def showmeta(parser: argparse.ArgumentParser):
-    args = parser.parse_args()
+def showmeta(args: argparse.Namespace):
     cliexec = CliExecGeospatial({
         "host": args.host,
         "port": int(args.port)
     })
-    out = cliexec.show_meta(
-        args.database_dir
-    )
+    out = cliexec.show_meta()
 
     logger.info(f"retrieved metadata: {out}")
+    out_str = json.dumps(out, ensure_ascii=False)
+    return out_str
 
 
 def show(parser: argparse.ArgumentParser):
@@ -292,11 +291,6 @@ def show_meta_parser(
     # Parser for 'filter' command
     meta_parser = subparsers.add_parser(
         "showmeta", help="show available meta entries")
-    meta_parser.add_argument(
-        "--database_dir",
-        help="the directory where databases are stored/created",
-        required=True
-    )
 
 def add_initialize_parser(
     subparsers
@@ -574,7 +568,7 @@ def execute(xargs=None):
     elif args.command == "addmeta":
         addmeta(parser)
     elif args.command == "showmeta":
-        showmeta(parser)
+        out_str = showmeta(args)
     elif args.command == "initialize":
         initialize(parser)
     elif args.command == "show":
